@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3] – 2026-05
+
+### Fixed
+- Correct Claude Code MCP registration instructions: `mcpServers` is not a valid
+  field in `settings.json`; document `claude mcp add` and the `.mcp.json` project
+  file instead.
+- Add Codex `~/.codex/config.toml` registration section.
+
 ## [0.1.2] – 2026-05
 
 ### Fixed

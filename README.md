@@ -2,7 +2,7 @@
 
 > CLI + MCP server to query OpenRouter model info: prices, ELO rankings, context and comparisons.
 
-Any person or AI agent (Claude Code, Cursor, pi, etc.) can install it and use it
+Any person or AI agent (Claude Code, Codex, Cursor, pi, etc.) can install it and use it
 to make informed decisions about which model to use.
 
 [![npm version](https://img.shields.io/npm/v/@aggc/or-info.svg)](https://www.npmjs.com/package/@aggc/or-info)
@@ -179,39 +179,51 @@ or-info refresh         # Force-refresh OpenRouter catalog + LMArena ELO
 
 ### Register in Claude Code
 
-Add to `~/.claude/settings.json`:
+The recommended way is the `claude mcp add` command, which writes to `~/.claude.json`:
+
+```bash
+# Global — available in all projects
+claude mcp add --scope user or-info -- or-info --mcp
+
+# Project-only (run from the project directory)
+claude mcp add or-info -- or-info --mcp
+```
+
+Then verify:
+
+```bash
+claude mcp list
+```
+
+**Project `.mcp.json`** — commit this file to share the config with your team:
+
+macOS / Linux:
 
 ```json
 {
   "mcpServers": {
     "or-info": {
       "command": "or-info",
-      "args": ["--mcp"],
-      "env": {
-        "OPENROUTER_API_KEY": "sk-or-..."
-      }
+      "args": ["--mcp"]
     }
   }
 }
 ```
 
-Windows global install:
+Windows:
 
 ```json
 {
   "mcpServers": {
     "or-info": {
       "command": "or-info.cmd",
-      "args": ["--mcp"],
-      "env": {
-        "OPENROUTER_API_KEY": "sk-or-..."
-      }
+      "args": ["--mcp"]
     }
   }
 }
 ```
 
-If you installed via `npx` (without global install) on macOS/Linux:
+Without a global install (macOS/Linux):
 
 ```json
 {
@@ -224,7 +236,7 @@ If you installed via `npx` (without global install) on macOS/Linux:
 }
 ```
 
-If you installed via `npx` on Windows:
+Without a global install (Windows):
 
 ```json
 {
@@ -237,11 +249,17 @@ If you installed via `npx` on Windows:
 }
 ```
 
-Then verify:
+### Register in Codex
 
-```bash
-claude mcp list
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.or-info]
+command = "or-info"
+args = ["--mcp"]
 ```
+
+Then restart Codex for the change to take effect.
 
 ### Use from Pi
 
