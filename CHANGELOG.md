@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.3] – 2026-05
+
+### Fixed
+- Smithery publish now runs after GitHub Pages is live; server-card.json accessible.
+
 ## [0.2.2] – 2026-05
 
 ### Fixed
