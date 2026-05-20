@@ -39,20 +39,26 @@ npm test
 Useful variants:
 
 - `npm run test:local` for deterministic local coverage
-- `npm run test:online:smoke` for the live smoke suite used by `npm test`
+- `npm run test:online:smoke` for the live smoke suite used by CI as a non-blocking signal
 - `npm run test:online` for the full OpenRouter/HuggingFace integration suite
 
-`npm test` is intentionally not hermetic: it keeps real online validation for CLI and MCP,
-while isolating each suite with `OR_INFO_CONFIG_DIR` and `OR_INFO_CACHE_DIR` so prior machine
-state does not create false greens. The heavier edge-case online suite is split out so CI can
-keep at least one live smoke run per platform without amplifying third-party rate limits.
+`npm test` intentionally runs only deterministic local tests. Live online validation is split
+out because it depends on OpenRouter and HuggingFace availability and can hit third-party
+rate limits. Online suites isolate state with `OR_INFO_CONFIG_DIR` and `OR_INFO_CACHE_DIR`.
 
 Tests use Node.js built-in `node:test` — no extra test runner needed.
 
 ## Release process
 
+The package is published as `@aggc/or-info`; the installed executable is `or-info`.
+
 1. Update `CHANGELOG.md`.
 2. Bump version in `package.json`.
-3. Commit and push.
-4. Create a tag: `git tag v0.x.0 && git push --tags`.
-5. GitHub Actions publishes to npm automatically.
+3. Run `npm test`.
+4. Commit and push to `main`.
+5. Create and push a version tag: `git tag v0.x.0 && git push origin v0.x.0`.
+6. GitHub Actions publishes to npm with provenance.
+
+Release automation requires the repository secret `NPM_TOKEN` with publish permission for
+`@aggc/or-info`. After the package is bootstrapped, prefer npm Trusted Publishing and remove
+the token-based secret.

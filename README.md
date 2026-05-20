@@ -13,6 +13,16 @@ to make informed decisions about which model to use.
 
 ```bash
 npm install -g @aggc/or-info
+or-info --version
+```
+
+The npm package is published as `@aggc/or-info`, but the installed executable is
+`or-info`.
+
+You can also run it without a global install:
+
+```bash
+npx -y @aggc/or-info models --limit 5
 ```
 
 Requires Node.js 22 or later.
@@ -284,6 +294,36 @@ Additional entry points:
 - `npm run test:local` for deterministic no-network coverage
 - `npm run test:online:smoke` for the live smoke subset used by CI as a non-blocking signal
 - `npm run test:online` for the full live CLI/MCP suite, including edge cases
+
+## Release
+
+Releases are published automatically to npm from GitHub Actions when a version tag is pushed.
+The package is public under the `@aggc` npm scope.
+
+Release checklist:
+
+1. Update `CHANGELOG.md`.
+2. Bump `version` in `package.json`.
+3. Run `npm test`.
+4. Commit and push to `main`.
+5. Create and push a matching tag:
+
+```bash
+git tag v0.x.0
+git push origin v0.x.0
+```
+
+The publish workflow runs `npm ci`, `npm run test:local`, then
+`npm publish --provenance --access public`.
+
+Repository release requirements:
+
+- GitHub secret `NPM_TOKEN` must exist for `jmtrs/or-info`.
+- The token must have npm publish permission for `@aggc/or-info`.
+- `id-token: write` is enabled so npm provenance is attached to published versions.
+
+After the initial package bootstrap, prefer migrating to npm Trusted Publishing and then
+remove `NPM_TOKEN` from the repository secrets.
 
 ## Contributing
 

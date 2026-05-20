@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "bin": {
-    "or-info": "./bin/or-info.mjs"
+    "or-info": "bin/or-info.mjs"
   },
   "files": [
     "bin",
