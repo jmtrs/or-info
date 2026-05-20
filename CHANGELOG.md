@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0] – 2026-05
+
+### Added
+- Publish to [Smithery](https://smithery.ai/servers/aggc/or-info) on every release:
+  `smithery.yaml` config and `logo.svg` added; workflow extended with a Smithery
+  publish step (non-blocking via `continue-on-error`).
+
 ## [0.1.5] – 2026-05
 
 ### Fixed
