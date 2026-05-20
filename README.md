@@ -5,14 +5,14 @@
 Any person or AI agent (Claude Code, Cursor, pi, etc.) can install it and use it
 to make informed decisions about which model to use.
 
-[![npm version](https://img.shields.io/npm/v/or-info.svg)](https://www.npmjs.com/package/or-info)
+[![npm version](https://img.shields.io/npm/v/@jmtrs/or-info.svg)](https://www.npmjs.com/package/@jmtrs/or-info)
 [![CI](https://github.com/jmtrs/or-info/actions/workflows/ci.yml/badge.svg)](https://github.com/jmtrs/or-info/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Install
 
 ```bash
-npm install -g or-info
+npm install -g @jmtrs/or-info
 ```
 
 Requires Node.js 22 or later.
@@ -208,7 +208,7 @@ If you installed via `npx` (without global install) on macOS/Linux:
   "mcpServers": {
     "or-info": {
       "command": "npx",
-      "args": ["-y", "or-info", "--mcp"]
+      "args": ["-y", "@jmtrs/or-info", "--mcp"]
     }
   }
 }
@@ -221,7 +221,7 @@ If you installed via `npx` on Windows:
   "mcpServers": {
     "or-info": {
       "command": "npx.cmd",
-      "args": ["-y", "or-info", "--mcp"]
+      "args": ["-y", "@jmtrs/or-info", "--mcp"]
     }
   }
 }

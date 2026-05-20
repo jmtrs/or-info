@@ -1,5 +1,5 @@
 {
-  "name": "or-info",
+  "name": "@jmtrs/or-info",
   "version": "0.1.0",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "type": "module",
@@ -42,7 +42,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jmtrs/or-info.git"
+    "url": "git+https://github.com/jmtrs/or-info.git"
   },
   "bugs": {
     "url": "https://github.com/jmtrs/or-info/issues"
