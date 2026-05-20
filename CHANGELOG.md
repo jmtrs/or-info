@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.1] – 2026-05
+
+### Changed
+- Document npm installation under the `@aggc/or-info` package name and clarify that
+  the installed executable is `or-info`.
+- Document the automated release flow, `NPM_TOKEN` requirement and future Trusted
+  Publishing migration.
+- Normalize the package `bin` path used for npm publishing.
+
 ## [0.1.0] – 2026-05
 
 ### Added
