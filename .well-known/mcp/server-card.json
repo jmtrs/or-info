@@ -1,0 +1,78 @@
+{
+  "serverInfo": {
+    "name": "or-info",
+    "version": "0.2.1"
+  },
+  "authentication": {
+    "required": false
+  },
+  "tools": [
+    {
+      "name": "get_model_info",
+      "description": "Get pricing, context length, architecture and features for a specific OpenRouter model",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_id": { "type": "string", "description": "OpenRouter model ID, e.g. \"anthropic/claude-sonnet-4-5\"" }
+        },
+        "required": ["model_id"]
+      }
+    },
+    {
+      "name": "list_models",
+      "description": "List OpenRouter models with pricing. Optionally filter by name/id, sort, and limit results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filter": { "type": "string", "description": "Case-insensitive substring to match against model ID or name" },
+          "sort_by": { "type": "string", "enum": ["name", "price", "context"], "description": "Sort order" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 200, "description": "Max models to return (default 50)" },
+          "free_only": { "type": "boolean", "description": "Return only free models" }
+        }
+      }
+    },
+    {
+      "name": "get_benchmarks",
+      "description": "Get LMArena ELO ranking for a model: score, global rank, vote count and confidence interval",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_id": { "type": "string", "description": "OpenRouter model ID" }
+        },
+        "required": ["model_id"]
+      }
+    },
+    {
+      "name": "compare_models",
+      "description": "Side-by-side comparison of two models: pricing, context, benchmarks and features",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_a": { "type": "string", "description": "First OpenRouter model ID" },
+          "model_b": { "type": "string", "description": "Second OpenRouter model ID" }
+        },
+        "required": ["model_a", "model_b"]
+      }
+    },
+    {
+      "name": "best_for_task",
+      "description": "Rank the best models for a specific task, optionally within a price budget",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task": { "type": "string", "enum": ["coding", "reasoning", "general", "vision", "cheap"], "description": "Task type to optimise for" },
+          "max_price_per_m_output": { "type": "number", "description": "Maximum price per 1M output tokens in USD" },
+          "limit": { "type": "integer", "minimum": 1, "maximum": 20, "description": "Number of results (default 5)" }
+        },
+        "required": ["task"]
+      }
+    },
+    {
+      "name": "refresh_cache",
+      "description": "Force-refresh the local cache: OpenRouter model catalog + LMArena ELO data",
+      "inputSchema": { "type": "object", "properties": {} }
+    }
+  ],
+  "resources": [],
+  "prompts": []
+}

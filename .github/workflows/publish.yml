@@ -31,6 +31,9 @@ jobs:
 
       - name: Publish to Smithery
         continue-on-error: true
-        run: npx --yes @smithery/cli mcp publish "https://github.com/jmtrs/or-info" -n aggc/or-info
+        run: |
+          npx --yes @smithery/cli mcp publish "https://jmtrs.github.io/or-info" \
+            -n aggc/or-info \
+            --config-schema '{"type":"object","required":[],"properties":{"apiKey":{"type":"string","description":"OpenRouter API key (optional, for higher rate limits)"}}}'
         env:
           SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}

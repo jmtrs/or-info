@@ -2,16 +2,18 @@
 
 startCommand:
   type: stdio
-  configSchema:
-    type: object
-    required: []
-    properties:
-      apiKey:
-        type: string
-        description: OpenRouter API key (optional, for higher rate limits)
-  commandFunction: |-
-    (config) => ({
-      command: 'npx',
-      args: ['-y', '@aggc/or-info', '--mcp'],
-      env: config.apiKey ? { OPENROUTER_API_KEY: config.apiKey } : {}
-    })
+
+configSchema:
+  type: object
+  required: []
+  properties:
+    apiKey:
+      type: string
+      description: OpenRouter API key (optional, for higher rate limits)
+
+commandFunction: |-
+  (config) => ({
+    command: 'npx',
+    args: ['-y', '@aggc/or-info', '--mcp'],
+    env: config.apiKey ? { OPENROUTER_API_KEY: config.apiKey } : {}
+  })

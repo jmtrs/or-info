@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.2] – 2026-05
+
+### Fixed
+- Add `/.well-known/mcp/server-card.json` served via GitHub Pages so Smithery
+  can skip the MCP server scan (which fails due to startup time in their sandbox).
+- Pass `--config-schema` explicitly in the Smithery CLI publish command.
+- Revert `smithery.yaml` to correct top-level format for `configSchema` and
+  `commandFunction`.
+
 ## [0.2.1] – 2026-05
 
 ### Fixed
