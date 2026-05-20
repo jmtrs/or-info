@@ -7,6 +7,7 @@ to make informed decisions about which model to use.
 
 [![npm version](https://img.shields.io/npm/v/@aggc/or-info.svg)](https://www.npmjs.com/package/@aggc/or-info)
 [![CI](https://github.com/jmtrs/or-info/actions/workflows/ci.yml/badge.svg)](https://github.com/jmtrs/or-info/actions/workflows/ci.yml)
+[![smithery badge](https://smithery.ai/badge/aggc/or-info)](https://smithery.ai/servers/aggc/or-info)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Install
