@@ -40,7 +40,7 @@ async function apiKey() {
 program
   .name('or-info')
   .description('OpenRouter model info: prices, benchmarks, context and comparisons')
-  .version('0.1.0')
+  .version('0.1.2')
   .option('--mcp', 'Start MCP server (stdio transport)');
 
 // ── models ─────────────────────────────────────────────────────────────────

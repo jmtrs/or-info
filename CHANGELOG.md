@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.2] – 2026-05
+
+### Fixed
+- Align CLI, MCP server and HTTP user-agent version strings with the published
+  package version.
+
 ## [0.1.1] – 2026-05
 
 ### Changed
