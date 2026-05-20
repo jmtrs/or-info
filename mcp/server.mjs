@@ -183,7 +183,7 @@ async function handleTool(name, args) {
 
 export async function startMcp() {
   const server = new Server(
-    { name: 'or-info', version: '0.1.4' },
+    { name: 'or-info', version: '0.1.5' },
     { capabilities: { tools: {} } }
   );
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5] – 2026-05
+
+### Fixed
+- `User-Agent` headers in `openrouter.mjs` and `lmarena.mjs` were hardcoded to
+  `0.1.2` and never updated on release. They now read the version from
+  `package.json` at runtime via a shared `lib/version.mjs` module.
+
 ## [0.1.4] – 2026-05
 
 ### Fixed
