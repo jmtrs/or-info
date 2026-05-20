@@ -1,5 +1,5 @@
 {
-  "name": "@jmtrs/or-info",
+  "name": "@aggc/or-info",
   "version": "0.1.0",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "type": "module",
