@@ -1,6 +1,6 @@
 {
   "name": "@aggc/or-info",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "type": "module",
   "engines": {
@@ -19,7 +19,8 @@
     "test:local": "node --test test/local/**/*.mjs",
     "test:online:smoke": "node --test test/online/cli.mjs test/online/mcp.mjs",
     "test:online": "node --test --test-concurrency=1 test/online/**/*.mjs",
-    "test:watch": "node --test --watch test/local/**/*.mjs test/online/cli.mjs test/online/mcp.mjs"
+    "test:watch": "node --test --watch test/local/**/*.mjs test/online/cli.mjs test/online/mcp.mjs",
+    "build:mcpb": "rm -rf .mcpb-build or-info.mcpb && mkdir .mcpb-build && cp -R bin lib mcp package.json package-lock.json README.md LICENSE manifest.json .mcpb-build/ && (cd .mcpb-build && npm ci --omit=dev --ignore-scripts && npx -y @anthropic-ai/mcpb pack . ../or-info.mcpb)"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

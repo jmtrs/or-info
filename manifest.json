@@ -1,0 +1,45 @@
+{
+  "manifest_version": "0.3",
+  "name": "or-info",
+  "display_name": "OpenRouter Info",
+  "version": "0.2.5",
+  "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
+  "long_description": "Query OpenRouter model catalog and LMArena ELO rankings. Compare models, list best-for-task, get pricing and context length. No API key required for public catalog; optional OPENROUTER_API_KEY for private/pay-gated models.",
+  "author": {
+    "name": "jmtrs",
+    "url": "https://github.com/jmtrs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jmtrs/or-info.git"
+  },
+  "homepage": "https://github.com/jmtrs/or-info#readme",
+  "documentation": "https://github.com/jmtrs/or-info#readme",
+  "support": "https://github.com/jmtrs/or-info/issues",
+  "license": "MIT",
+  "keywords": ["openrouter", "llm", "ai", "mcp", "benchmarks", "pricing"],
+  "server": {
+    "type": "node",
+    "entry_point": "bin/or-info.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/bin/or-info.mjs", "--mcp"],
+      "env": {
+        "OPENROUTER_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "OpenRouter API Key",
+      "description": "Optional. Provides access to private/pay-gated models and higher rate limits.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": { "node": ">=22.0.0" }
+  }
+}

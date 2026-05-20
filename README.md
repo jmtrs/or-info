@@ -27,6 +27,16 @@ npx -y @aggc/or-info models --limit 5
 
 Requires Node.js 22 or later.
 
+### Install from Smithery
+
+Each release is also published as a Smithery MCPB bundle, importable in one click
+from clients that support the MCPB format (Claude Desktop, etc.):
+
+https://smithery.ai/server/aggc/or-info
+
+The bundle is attached as an asset to every GitHub release (`or-info.mcpb`) and
+can also be installed manually by dropping the file into the client.
+
 Supported runtimes and platforms:
 
 - Node.js 22+
@@ -321,7 +331,7 @@ The package is public under the `@aggc` npm scope.
 Release checklist:
 
 1. Update `CHANGELOG.md`.
-2. Bump `version` in `package.json`.
+2. Bump `version` in `package.json` **and** `manifest.json` (must match).
 3. Run `npm test`.
 4. Commit and push to `main`.
 5. Create and push a matching tag:

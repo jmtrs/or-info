@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.5] – 2026-05
+
+### Changed
+- Smithery publish switched from URL-based scanning to **MCPB bundle** upload.
+  Adds root `manifest.json` (MCPB v0.3) and `npm run build:mcpb` script. The
+  publish workflow now builds `or-info.mcpb`, attaches it as a GitHub release
+  asset and calls `smithery mcp publish ./or-info.mcpb -n aggc/or-info`.
+
+### Removed
+- `smithery.yaml` (URL-stdio flow, caused 422/405 on publish).
+- `.well-known/mcp/server-card.json` and `pages.yml` workflow (server-card
+  advertise only applies to HTTP servers on the same host).
+
 ## [0.2.4] – 2026-05
 
 ### Fixed
