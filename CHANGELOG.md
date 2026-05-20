@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1] – 2026-05
+
+### Fixed
+- `smithery.yaml`: `configSchema` and `commandFunction` must be nested under
+  `startCommand`, not at the root level.
+
 ## [0.2.0] – 2026-05
 
 ### Added
