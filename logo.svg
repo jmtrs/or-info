@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+  <rect width="64" height="64" fill="#000000"/>
+
+  <!-- row 0 -->
+  <rect x="16" y="0"  width="8" height="8" fill="#FFFFFF"/>
+  <rect x="24" y="0"  width="8" height="8" fill="#FFFFFF"/>
+  <rect x="32" y="0"  width="8" height="8" fill="#FFFFFF"/>
+  <rect x="40" y="0"  width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 1 -->
+  <rect x="8"  y="8"  width="8" height="8" fill="#FFFFFF"/>
+  <rect x="48" y="8"  width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 2 -->
+  <rect x="0"  y="16" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="56" y="16" width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 3 -->
+  <rect x="0"  y="24" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="32" y="24" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="40" y="24" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="56" y="24" width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 4 -->
+  <rect x="0"  y="32" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="32" y="32" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="40" y="32" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="56" y="32" width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 5 -->
+  <rect x="0"  y="40" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="56" y="40" width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 6 -->
+  <rect x="8"  y="48" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="48" y="48" width="8" height="8" fill="#FFFFFF"/>
+
+  <!-- row 7 -->
+  <rect x="16" y="56" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="24" y="56" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="32" y="56" width="8" height="8" fill="#FFFFFF"/>
+  <rect x="40" y="56" width="8" height="8" fill="#FFFFFF"/>
+</svg>

@@ -28,3 +28,9 @@ jobs:
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to Smithery
+        continue-on-error: true
+        run: npx --yes @smithery/cli mcp publish "https://github.com/jmtrs/or-info" -n aggc/or-info
+        env:
+          SMITHERY_API_KEY: ${{ secrets.SMITHERY_API_KEY }}
