@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { program } from 'commander';
+import { InvalidArgumentError, program } from 'commander';
 import chalk from 'chalk';
 import { fetchModels, findModel, pricePerMillion, contextLength } from '../lib/openrouter.mjs';
 import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
@@ -19,6 +19,20 @@ function die(msg) {
   process.exit(1);
 }
 
+const TOP_TASKS = new Set(['coding', 'reasoning', 'general', 'vision', 'cheap']);
+
+function parsePositiveInteger(value) {
+  const n = Number.parseInt(value, 10);
+  if (!Number.isInteger(n) || n < 1 || String(n) !== String(value).trim()) {
+    throw new InvalidArgumentError('must be a positive integer');
+  }
+  return n;
+}
+
+function parseLimit(value, max) {
+  return Math.min(max, parsePositiveInteger(value));
+}
+
 async function apiKey() {
   return getApiKey();
 }
@@ -36,6 +50,7 @@ program
   .option('--sort <field>', 'Sort by: price, context, name', 'name')
   .option('--filter <text>', 'Filter by model ID or name (case-insensitive)')
   .option('--free', 'Show only free models')
+  .option('--limit <n>', 'Maximum number of models to return (max 200)', (v) => parseLimit(v, 200))
   .option('--tags', 'Show feature tags')
   .option('--json', 'Output raw JSON')
   .action(async (opts) => {
@@ -66,6 +81,8 @@ program
     } else {
       models.sort((a, b) => a.id.localeCompare(b.id));
     }
+
+    if (opts.limit) models = models.slice(0, opts.limit);
 
     if (opts.json) {
       console.log(JSON.stringify(models, null, 2));
@@ -151,9 +168,13 @@ program
   .description('Best models for a task')
   .option('--task <task>', 'Task: coding, reasoning, general, vision, cheap', 'general')
   .option('--budget <usd>', 'Max price per 1M output tokens (e.g. 1.00)', parseFloat)
-  .option('--limit <n>', 'Number of results', (v) => Math.max(1, parseInt(v, 10)), 5)
+  .option('--limit <n>', 'Number of results', parsePositiveInteger, 5)
   .option('--json', 'Output raw JSON')
   .action(async (opts) => {
+    if (!TOP_TASKS.has(opts.task)) {
+      die(`Invalid task: ${opts.task}. Expected one of: ${[...TOP_TASKS].join(', ')}`);
+    }
+
     const key = await apiKey();
     const [models, allElo] = await Promise.all([
       fetchModels({ apiKey: key }),

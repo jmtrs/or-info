@@ -100,6 +100,7 @@ or-info models --sort price           # Cheapest output first
 or-info models --sort context         # Largest context first
 or-info models --filter coding        # Models whose ID/name contains "coding"
 or-info models --free                 # Free models only
+or-info models --limit 20             # Limit the number of results
 or-info models --tags                 # Show feature tags (vision, tools, reasoning…)
 or-info models --json                 # Raw JSON
 ```
@@ -232,33 +233,10 @@ Then verify:
 claude mcp list
 ```
 
-### Register in pi
+### Use from Pi
 
-Add to `~/.pi/agent/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "or-info": {
-      "command": "or-info",
-      "args": ["--mcp"]
-    }
-  }
-}
-```
-
-Windows:
-
-```json
-{
-  "mcpServers": {
-    "or-info": {
-      "command": "or-info.cmd",
-      "args": ["--mcp"]
-    }
-  }
-}
-```
+Pi does not use an `mcpServers` settings schema. The recommended integration is a Pi skill
+that calls the installed `or-info` CLI, for example `~/.pi/agent/skills/or-info/SKILL.md`.
 
 ### Test the MCP server
 
