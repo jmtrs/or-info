@@ -10,7 +10,7 @@ jobs:
     name: npm publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write  # create GitHub release + upload MCPB bundle asset
       id-token: write  # for npm provenance
     steps:
       - uses: actions/checkout@v4
