@@ -172,7 +172,7 @@ or-info refresh         # Force-refresh OpenRouter catalog + LMArena ELO
 |------|-------------|
 | `get_model_info` | Pricing, context, architecture, features and LMArena ELO for a model |
 | `list_models` | List models with optional filter, sort and limit |
-| `get_benchmarks` | LMArena ELO, rank, votes and confidence interval for a model |
+| `get_benchmarks` | LMArena ELO score, global rank, vote count and confidence interval for a model |
 | `compare_models` | Side-by-side comparison of two models |
 | `best_for_task` | Ranked top models for coding/reasoning/general/vision/cheap |
 | `refresh_cache` | Force-refresh OpenRouter catalog + LMArena ELO |

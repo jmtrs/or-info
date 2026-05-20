@@ -33,7 +33,7 @@ const TOOLS = [
   },
   {
     name: 'get_benchmarks',
-    description: 'Get benchmark scores for a model: MMLU, HumanEval, MATH, coding, ELO, speed and latency',
+    description: 'Get LMArena ELO ranking for a model: score, global rank, vote count and confidence interval',
     inputSchema: {
       type: 'object',
       properties: {
@@ -183,7 +183,7 @@ async function handleTool(name, args) {
 
 export async function startMcp() {
   const server = new Server(
-    { name: 'or-info', version: '0.1.3' },
+    { name: 'or-info', version: '0.1.4' },
     { capabilities: { tools: {} } }
   );
 

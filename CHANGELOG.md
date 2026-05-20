@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4] – 2026-05
+
+### Fixed
+- Correct `get_benchmarks` tool description: it returns LMArena ELO data only,
+  not MMLU / HumanEval / MATH / speed / latency as the old description stated.
+
 ## [0.1.3] – 2026-05
 
 ### Fixed
