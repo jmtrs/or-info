@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.6] – 2026-05
+
+### Added
+- `manifest.json` now declares the 6 MCP tools with full `inputSchema` and an
+  `icon.png` (rendered from `logo.svg`). Lifts Smithery's Capability Quality
+  score from 0/40.
+
+### Changed
+- `build:mcpb` packs with `zip` instead of `mcpb pack`. Reason: the MCPB v0.3
+  validator rejects `inputSchema` inside `tools[]`, but Smithery requires it.
+  The `.mcpb` format is a plain zip, so we skip the validator.
+
 ## [0.2.5] – 2026-05
 
 ### Changed
