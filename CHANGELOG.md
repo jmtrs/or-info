@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.4] – 2026-05
+
+### Fixed
+- Smithery publish: revert source URL to GitHub repo (stdio mode); GitHub Pages
+  URL was treated as HTTP/SSE and broke the commandFunction flow.
+
 ## [0.2.3] – 2026-05
 
 ### Fixed
