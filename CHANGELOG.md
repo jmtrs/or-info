@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.9] – 2026-05
+
+### Added
+- HTTP transport (Streamable HTTP) via `startHttpMcp()` in `mcp/server.mjs`.
+  Reads `PORT` env var (default 8000), stateless sessions, bridges
+  `api_key`/`API_KEY` → `OPENROUTER_API_KEY` for external hosters.
+
+### Changed
+- Version read dynamically from `package.json` in both `mcp/server.mjs`
+  and `bin/or-info.mjs` (was hardcoded `0.1.5`).
+
 ## [0.2.8] – 2026-05
 
 ### Changed
