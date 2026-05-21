@@ -1,6 +1,6 @@
 {
   "name": "@aggc/or-info",
-  "version": "0.2.15",
+  "version": "0.2.16",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "type": "module",
   "engines": {

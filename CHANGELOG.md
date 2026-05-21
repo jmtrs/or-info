@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.16] – 2026-05
+
+### Fixed
+- Online smoke tests now skip gracefully on transient network errors (429, 502,
+   timeout, etc.) instead of hard-failing. Affects `benchmark`, `compare`,
+  `top`, and `refresh` CLI tests and the MCP `refresh_cache` test.
+- `warmUpBenchmarksCache` now falls back to `or-info refresh` when no local
+  cache exists (the CI case), so HuggingFace is hit once per suite instead of
+  once per test — reduces 429 throttling on CI.
+
 ## [0.2.15] – 2026-05
 
 ### Fixed

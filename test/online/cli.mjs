@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pricePerMillion } from '../../lib/openrouter.mjs';
 import { BENCHMARKS_CACHE } from '../../lib/paths.mjs';
-import { runCli, parseJson, ONLINE_TIMEOUT } from '../helpers/online.mjs';
+import { runCli, parseJson, ONLINE_TIMEOUT, isTransientNetworkMessage } from '../helpers/online.mjs';
 import { createIsolatedAppEnv } from '../helpers/runtime.mjs';
 
 describe('CLI – models', () => {
@@ -102,11 +102,16 @@ describe('CLI – benchmark', () => {
     await isolated.cleanup();
   });
 
-  it('returns model and elo fields (elo may be null)', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['benchmark', 'anthropic/claude-3-haiku', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(typeof out.model, 'string');
-    assert.ok('elo' in out, 'elo field expected');
+  it('returns model and elo fields (elo may be null)', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['benchmark', 'anthropic/claude-3-haiku', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(typeof out.model, 'string');
+      assert.ok('elo' in out, 'elo field expected');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 });
 
@@ -122,18 +127,23 @@ describe('CLI – compare', () => {
     await isolated.cleanup();
   });
 
-  it('returns a/b objects with model data', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli([
-      'compare',
-      'anthropic/claude-3-haiku',
-      'openai/gpt-4o-mini',
-      '--json',
-    ], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(typeof out.a, 'object', 'a object expected');
-    assert.equal(typeof out.b, 'object', 'b object expected');
-    assert.equal(out.a.model.id, 'anthropic/claude-3-haiku');
-    assert.equal(out.b.model.id, 'openai/gpt-4o-mini');
+  it('returns a/b objects with model data', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli([
+        'compare',
+        'anthropic/claude-3-haiku',
+        'openai/gpt-4o-mini',
+        '--json',
+      ], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(typeof out.a, 'object', 'a object expected');
+      assert.equal(typeof out.b, 'object', 'b object expected');
+      assert.equal(out.a.model.id, 'anthropic/claude-3-haiku');
+      assert.equal(out.b.model.id, 'openai/gpt-4o-mini');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 
   it('exits with code 1 when a model is not found', { timeout: ONLINE_TIMEOUT }, async () => {
@@ -156,33 +166,43 @@ describe('CLI – top', () => {
     await isolated.cleanup();
   });
 
-  it('returns ranked models for coding task respecting --limit', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--task', 'coding', '--limit', '3', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.ok(Array.isArray(out), 'should be an array');
-    assert.ok(out.length > 0, 'should have results');
-    assert.ok(out.length <= 3, 'should respect --limit 3');
-    for (const r of out) {
-      assert.equal(typeof r.id, 'string', 'each result needs id');
-      assert.equal(typeof r.score, 'number', 'each result needs score');
+  it('returns ranked models for coding task respecting --limit', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--task', 'coding', '--limit', '3', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.ok(Array.isArray(out), 'should be an array');
+      assert.ok(out.length > 0, 'should have results');
+      assert.ok(out.length <= 3, 'should respect --limit 3');
+      for (const r of out) {
+        assert.equal(typeof r.id, 'string', 'each result needs id');
+        assert.equal(typeof r.score, 'number', 'each result needs score');
+      }
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
     }
   });
 
-  it('--budget filters results by max output price', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli([
-      'top',
-      '--task',
-      'general',
-      '--budget',
-      '2.0',
-      '--limit',
-      '5',
-      '--json',
-    ], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.ok(Array.isArray(out), 'should be an array');
-    for (const r of out) {
-      assert.equal(typeof r.score, 'number', 'each result needs score');
+  it('--budget filters results by max output price', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli([
+        'top',
+        '--task',
+        'general',
+        '--budget',
+        '2.0',
+        '--limit',
+        '5',
+        '--json',
+      ], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.ok(Array.isArray(out), 'should be an array');
+      for (const r of out) {
+        assert.equal(typeof r.score, 'number', 'each result needs score');
+      }
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
     }
   });
 });
@@ -217,21 +237,21 @@ describe('CLI – refresh', () => {
     await isolated.cleanup();
   });
 
-  it('force-refreshes cache and reports model and ELO counts', { timeout: ONLINE_TIMEOUT }, async () => {
+  it('force-refreshes cache and reports model and ELO counts', { timeout: ONLINE_TIMEOUT }, async (t) => {
     try {
       const { stdout } = await runCli(['refresh'], { env: isolated.env });
       assert.ok(/\d+ models/.test(stdout), 'should report model count');
       assert.ok(/\d+ entries/.test(stdout), 'should report ELO entry count');
     } catch (err) {
-      // HuggingFace 429s are transient — skip rather than fail.
-      if (err.message?.includes('429')) return;
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
       throw err;
     }
   });
 });
 
-// Copy the user's real benchmarks cache into the isolated env's cache dir
-// so tests don't have to re-download from HuggingFace (avoids 429s).
+// Pre-populate the isolated env's benchmarks cache.
+// If a local cache exists, copy it. Otherwise, run `or-info refresh`
+// once so HuggingFace is hit only once, not per-test.
 async function warmUpBenchmarksCache(env) {
   try {
     const src = BENCHMARKS_CACHE;
@@ -240,7 +260,14 @@ async function warmUpBenchmarksCache(env) {
     const content = await fs.readFile(src, 'utf-8');
     await fs.mkdir(dstDir, { recursive: true });
     await fs.writeFile(dst, content, 'utf-8');
+    return;
   } catch {
-    // If the real cache doesn't exist yet, tests will download from scratch.
+    // No local cache — fall through to CLI refresh.
+  }
+
+  try {
+    await runCli(['refresh'], { env, timeoutMs: 30_000 });
+  } catch {
+    // Best-effort; individual tests handle transient errors via skip.
   }
 }

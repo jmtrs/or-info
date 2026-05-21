@@ -2,7 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ONLINE_TIMEOUT, callToolWithRetry, parseToolResult, startMcpClient } from '../helpers/online.mjs';
+import { ONLINE_TIMEOUT, callToolWithRetry, isTransientNetworkMessage, parseToolResult, startMcpClient } from '../helpers/online.mjs';
 import { createIsolatedAppEnv } from '../helpers/runtime.mjs';
 import { BENCHMARKS_CACHE } from '../../lib/paths.mjs';
 
@@ -185,12 +185,11 @@ describe('MCP server', () => {
     assert.equal(result.isError, true, 'should be an error for unknown tool');
   });
 
-  it('refresh_cache force-refreshes and returns counts', { timeout: ONLINE_TIMEOUT }, async () => {
+  it('refresh_cache force-refreshes and returns counts', { timeout: ONLINE_TIMEOUT }, async (t) => {
     const result = await callToolWithRetry(client, 'refresh_cache', {});
     if (result.isError) {
-      // HuggingFace 429s are transient — skip rather than fail.
       const msg = result.content?.[0]?.text ?? '';
-      if (msg.includes('429')) return;
+      if (isTransientNetworkMessage(msg)) return t.skip(`Transient network error: ${msg}`);
     }
     assert.ok(!result.isError, 'should not be an error');
     const data = parseToolResult(result);
@@ -200,8 +199,9 @@ describe('MCP server', () => {
   });
 });
 
-// Copy the user's real benchmarks cache into the isolated env's cache dir
-// so tests don't have to re-download from HuggingFace (avoids 429s).
+// Pre-populate the isolated env's benchmarks cache.
+// If a local cache exists, copy it. Otherwise, run `or-info refresh`
+// once so HuggingFace is hit only once, not per-test.
 async function warmUpBenchmarksCache(env) {
   try {
     const src = BENCHMARKS_CACHE;
@@ -210,7 +210,15 @@ async function warmUpBenchmarksCache(env) {
     const content = await fs.readFile(src, 'utf-8');
     await fs.mkdir(dstDir, { recursive: true });
     await fs.writeFile(dst, content, 'utf-8');
+    return;
   } catch {
-    // If the real cache doesn't exist yet, tests will download from scratch.
+    // No local cache — fall through to CLI refresh.
+  }
+
+  try {
+    const { runCli } = await import('../helpers/online.mjs');
+    await runCli(['refresh'], { env, timeoutMs: 30_000 });
+  } catch {
+    // Best-effort; individual tests handle transient errors via skip.
   }
 }
