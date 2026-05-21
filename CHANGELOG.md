@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12] – 2026-05
+
+### Fixed
+- `findModel` now resolves dot/hyphen variants in version numbers, so
+  `anthropic/claude-sonnet-4-5` correctly finds `anthropic/claude-sonnet-4.5`.
+  Exact match is tried first; the normalised fallback only runs on miss.
+
 ## [0.2.11] – 2026-05
 
 ### Fixed

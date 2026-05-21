@@ -2,6 +2,7 @@ import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   contextLength,
+  findModel,
   isFree,
   modelTags,
   pricePerMillion,
@@ -95,6 +96,25 @@ describe('modelTags', () => {
     assert.ok(tags.includes('tools'));
     assert.ok(tags.includes('vision'));
     assert.ok(tags.includes('long-context'));
+  });
+});
+
+describe('findModel', () => {
+  const models = [
+    { id: 'anthropic/claude-sonnet-4.5' },
+    { id: 'openai/gpt-4o' },
+  ];
+
+  it('finds by exact id', () => {
+    assert.equal(findModel(models, 'anthropic/claude-sonnet-4.5')?.id, 'anthropic/claude-sonnet-4.5');
+  });
+
+  it('resolves dot → hyphen variant', () => {
+    assert.equal(findModel(models, 'anthropic/claude-sonnet-4-5')?.id, 'anthropic/claude-sonnet-4.5');
+  });
+
+  it('returns null for unknown model', () => {
+    assert.equal(findModel(models, 'unknown/model'), null);
   });
 });
 
