@@ -17,13 +17,20 @@ describe('MCP server', () => {
     await isolated.cleanup();
   });
 
-  it('tools/list returns exactly 6 tools with correct names', { timeout: ONLINE_TIMEOUT }, async () => {
+  it('tools/list returns canonical and legacy tool names', { timeout: ONLINE_TIMEOUT }, async () => {
     const result = await client.send('tools/list', {});
     assert.ok(Array.isArray(result.tools), 'tools should be an array');
-    assert.equal(result.tools.length, 6, 'should have exactly 6 tools');
 
     const names = result.tools.map((tool) => tool.name);
-    const expected = [
+    const canonical = [
+      'models.get',
+      'models.list',
+      'benchmarks.get',
+      'models.compare',
+      'models.top',
+      'cache.refresh',
+    ];
+    const legacy = [
       'get_model_info',
       'list_models',
       'get_benchmarks',
@@ -32,7 +39,7 @@ describe('MCP server', () => {
       'refresh_cache',
     ];
 
-    for (const name of expected) {
+    for (const name of [...canonical, ...legacy]) {
       assert.ok(names.includes(name), `tool "${name}" should be present`);
     }
   });

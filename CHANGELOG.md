@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.8] – 2026-05
+
+### Changed
+- MCP tools renamed to dot-notation: `models.get`, `models.list`, `models.compare`,
+  `models.top`, `benchmarks.get`, `cache.refresh`. Forms a navigable tree as
+  expected by registries (Smithery).
+- Old flat names (`get_model_info`, `list_models`, `get_benchmarks`,
+  `compare_models`, `best_for_task`, `refresh_cache`) stay advertised in
+  `tools/list` as deprecated aliases (same schemas, prefixed `[Deprecated]`
+  description and annotation title) and continue to work via `tools/call`.
+
 ## [0.2.7] – 2026-05
 
 ### Added

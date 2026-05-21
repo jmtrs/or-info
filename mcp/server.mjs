@@ -26,9 +26,18 @@ const MODEL_SUMMARY_SCHEMA = {
 
 const ELO_SCHEMA = { type: ['object', 'null'], description: 'LMArena ELO entry or null when not tracked' };
 
-const TOOLS = [
+const TOOL_ALIASES = {
+  get_model_info: 'models.get',
+  list_models: 'models.list',
+  compare_models: 'models.compare',
+  best_for_task: 'models.top',
+  get_benchmarks: 'benchmarks.get',
+  refresh_cache: 'cache.refresh',
+};
+
+const CANONICAL_TOOLS = [
   {
-    name: 'get_model_info',
+    name: 'models.get',
     description: 'Get pricing, context length, architecture and features for a specific OpenRouter model',
     inputSchema: {
       type: 'object',
@@ -42,14 +51,14 @@ const TOOLS = [
       properties: { ...MODEL_SUMMARY_SCHEMA.properties, lmarena_elo: ELO_SCHEMA },
     },
     annotations: {
-      title: 'Get model info',
+      title: 'Get model',
       readOnlyHint: true,
       idempotentHint: true,
       openWorldHint: true,
     },
   },
   {
-    name: 'list_models',
+    name: 'models.list',
     description: 'List OpenRouter models with pricing. Optionally filter by name/id, sort, and limit results.',
     inputSchema: {
       type: 'object',
@@ -76,7 +85,7 @@ const TOOLS = [
     },
   },
   {
-    name: 'get_benchmarks',
+    name: 'benchmarks.get',
     description: 'Get LMArena ELO ranking for a model: score, global rank, vote count and confidence interval',
     inputSchema: {
       type: 'object',
@@ -94,14 +103,14 @@ const TOOLS = [
       required: ['model_id'],
     },
     annotations: {
-      title: 'Get benchmarks',
+      title: 'Get benchmark',
       readOnlyHint: true,
       idempotentHint: true,
       openWorldHint: true,
     },
   },
   {
-    name: 'compare_models',
+    name: 'models.compare',
     description: 'Side-by-side comparison of two models: pricing, context, benchmarks and features',
     inputSchema: {
       type: 'object',
@@ -127,7 +136,7 @@ const TOOLS = [
     },
   },
   {
-    name: 'best_for_task',
+    name: 'models.top',
     description: 'Rank the best models for a specific task, optionally within a price budget',
     inputSchema: {
       type: 'object',
@@ -160,14 +169,14 @@ const TOOLS = [
       required: ['task', 'results'],
     },
     annotations: {
-      title: 'Best models for task',
+      title: 'Top models for task',
       readOnlyHint: true,
       idempotentHint: true,
       openWorldHint: true,
     },
   },
   {
-    name: 'refresh_cache',
+    name: 'cache.refresh',
     description: 'Force-refresh the local cache: OpenRouter model catalog + LMArena ELO data',
     inputSchema: { type: 'object', properties: {} },
     outputSchema: {
@@ -187,6 +196,25 @@ const TOOLS = [
     },
   },
 ];
+
+// Legacy flat names kept advertised in tools/list for discoverability,
+// derived from the canonical tools so input/output schemas stay in sync.
+const LEGACY_BY_CANONICAL = Object.fromEntries(
+  Object.entries(TOOL_ALIASES).map(([legacy, canonical]) => [canonical, legacy])
+);
+
+const LEGACY_TOOLS = CANONICAL_TOOLS.flatMap((tool) => {
+  const legacyName = LEGACY_BY_CANONICAL[tool.name];
+  if (!legacyName) return [];
+  return [{
+    ...tool,
+    name: legacyName,
+    description: `[Deprecated] Alias of \`${tool.name}\`. Use \`${tool.name}\` instead.`,
+    annotations: { ...tool.annotations, title: `[Deprecated] ${tool.annotations.title}` },
+  }];
+});
+
+const TOOLS = [...CANONICAL_TOOLS, ...LEGACY_TOOLS];
 
 function safeModelSummary(model) {
   const price = pricePerMillion(model);
@@ -218,9 +246,12 @@ function errorContent(msg) {
 }
 
 async function handleTool(name, args) {
+  // Accept legacy flat names (get_model_info, list_models, ...) by mapping
+  // them to the dot-notation canonical names exposed in tools/list.
+  name = TOOL_ALIASES[name] ?? name;
   const key = await getApiKey();
 
-  if (name === 'get_model_info') {
+  if (name === 'models.get') {
     const { model_id } = args;
     if (!model_id || typeof model_id !== 'string') return errorContent('model_id is required');
     const models = await fetchModels({ apiKey: key });
@@ -230,7 +261,7 @@ async function handleTool(name, args) {
     return result({ ...safeModelSummary(model), lmarena_elo: elo ?? null });
   }
 
-  if (name === 'list_models') {
+  if (name === 'models.list') {
     const filter = String(args.filter ?? '').toLowerCase();
     const sortBy = args.sort_by ?? 'name';
     const limit = Math.min(200, Math.max(1, args.limit ?? 50));
@@ -248,14 +279,14 @@ async function handleTool(name, args) {
     return result({ total: models.length, models: models.map(safeModelSummary) });
   }
 
-  if (name === 'get_benchmarks') {
+  if (name === 'benchmarks.get') {
     const { model_id } = args;
     if (!model_id || typeof model_id !== 'string') return errorContent('model_id is required');
     const elo = await getElo(model_id);
     return result({ model_id, lmarena_elo: elo ?? null });
   }
 
-  if (name === 'compare_models') {
+  if (name === 'models.compare') {
     const { model_a, model_b } = args;
     if (!model_a || !model_b) return errorContent('model_a and model_b are required');
     const [models, eloA, eloB] = await Promise.all([
@@ -270,7 +301,7 @@ async function handleTool(name, args) {
     return result({ a: { ...safeModelSummary(mA), lmarena_elo: eloA }, b: { ...safeModelSummary(mB), lmarena_elo: eloB } });
   }
 
-  if (name === 'best_for_task') {
+  if (name === 'models.top') {
     const task = args.task ?? 'general';
     const limit = Math.min(20, Math.max(1, args.limit ?? 5));
     const maxPrice = args.max_price_per_m_output ?? undefined;
@@ -280,7 +311,7 @@ async function handleTool(name, args) {
     return result({ task, results: ranked.map((r) => ({ ...safeModelSummary(r.model), score: r.score, lmarena_elo: r.eloEntry })) });
   }
 
-  if (name === 'refresh_cache') {
+  if (name === 'cache.refresh') {
     const [models, elo] = await Promise.all([
       fetchModels({ force: true, apiKey: key }),
       loadLeaderboard({ force: true }),

@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "or-info",
   "display_name": "OpenRouter Info",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "long_description": "Query OpenRouter model catalog and LMArena ELO rankings. Compare models, list best-for-task, get pricing and context length. No API key required for public catalog; optional OPENROUTER_API_KEY for private/pay-gated models.",
   "author": {
@@ -51,7 +51,7 @@
   },
   "tools": [
     {
-      "name": "get_model_info",
+      "name": "models.get",
       "description": "Get pricing, context length, architecture and features for a specific OpenRouter model",
       "inputSchema": {
         "type": "object",
@@ -146,14 +146,14 @@
         }
       },
       "annotations": {
-        "title": "Get model info",
+        "title": "Get model",
         "readOnlyHint": true,
         "idempotentHint": true,
         "openWorldHint": true
       }
     },
     {
-      "name": "list_models",
+      "name": "models.list",
       "description": "List OpenRouter models with pricing. Optionally filter by name/id, sort, and limit results.",
       "inputSchema": {
         "type": "object",
@@ -280,7 +280,7 @@
       }
     },
     {
-      "name": "get_benchmarks",
+      "name": "benchmarks.get",
       "description": "Get LMArena ELO ranking for a model: score, global rank, vote count and confidence interval",
       "inputSchema": {
         "type": "object",
@@ -313,14 +313,14 @@
         ]
       },
       "annotations": {
-        "title": "Get benchmarks",
+        "title": "Get benchmark",
         "readOnlyHint": true,
         "idempotentHint": true,
         "openWorldHint": true
       }
     },
     {
-      "name": "compare_models",
+      "name": "models.compare",
       "description": "Side-by-side comparison of two models: pricing, context, benchmarks and features",
       "inputSchema": {
         "type": "object",
@@ -516,7 +516,7 @@
       }
     },
     {
-      "name": "best_for_task",
+      "name": "models.top",
       "description": "Rank the best models for a specific task, optionally within a price budget",
       "inputSchema": {
         "type": "object",
@@ -646,14 +646,14 @@
         ]
       },
       "annotations": {
-        "title": "Best models for task",
+        "title": "Top models for task",
         "readOnlyHint": true,
         "idempotentHint": true,
         "openWorldHint": true
       }
     },
     {
-      "name": "refresh_cache",
+      "name": "cache.refresh",
       "description": "Force-refresh the local cache: OpenRouter model catalog + LMArena ELO data",
       "inputSchema": {
         "type": "object",
@@ -680,6 +680,641 @@
       },
       "annotations": {
         "title": "Refresh cache",
+        "readOnlyHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_model_info",
+      "description": "[Deprecated] Alias of `models.get`. Use `models.get` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "description": "OpenRouter model ID, e.g. \"anthropic/claude-sonnet-4-5\""
+          }
+        },
+        "required": [
+          "model_id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "input_per_m": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Input price per 1M tokens (USD)"
+          },
+          "output_per_m": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Output price per 1M tokens (USD)"
+          },
+          "image_per_m": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cache_read_per_m": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "context_length": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "modality": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tokenizer": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "max_output_tokens": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "supported_parameters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "lmarena_elo": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "LMArena ELO entry or null when not tracked"
+          }
+        }
+      },
+      "annotations": {
+        "title": "[Deprecated] Get model",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "list_models",
+      "description": "[Deprecated] Alias of `models.list`. Use `models.list` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "filter": {
+            "type": "string",
+            "description": "Case-insensitive substring to match against model ID or name"
+          },
+          "sort_by": {
+            "type": "string",
+            "enum": [
+              "name",
+              "price",
+              "context"
+            ],
+            "description": "Sort order",
+            "default": "name"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "Max models to return (default 50)"
+          },
+          "free_only": {
+            "type": "boolean",
+            "description": "Return only free models"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "input_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Input price per 1M tokens (USD)"
+                },
+                "output_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Output price per 1M tokens (USD)"
+                },
+                "image_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "cache_read_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "context_length": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "modality": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tokenizer": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "max_output_tokens": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "supported_parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "total",
+          "models"
+        ]
+      },
+      "annotations": {
+        "title": "[Deprecated] List models",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "get_benchmarks",
+      "description": "[Deprecated] Alias of `benchmarks.get`. Use `benchmarks.get` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_id": {
+            "type": "string",
+            "description": "OpenRouter model ID"
+          }
+        },
+        "required": [
+          "model_id"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "model_id": {
+            "type": "string"
+          },
+          "lmarena_elo": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "LMArena ELO entry or null when not tracked"
+          }
+        },
+        "required": [
+          "model_id"
+        ]
+      },
+      "annotations": {
+        "title": "[Deprecated] Get benchmark",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "compare_models",
+      "description": "[Deprecated] Alias of `models.compare`. Use `models.compare` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model_a": {
+            "type": "string",
+            "description": "First OpenRouter model ID"
+          },
+          "model_b": {
+            "type": "string",
+            "description": "Second OpenRouter model ID"
+          }
+        },
+        "required": [
+          "model_a",
+          "model_b"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "a": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "input_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Input price per 1M tokens (USD)"
+              },
+              "output_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Output price per 1M tokens (USD)"
+              },
+              "image_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "cache_read_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "context_length": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "modality": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tokenizer": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "max_output_tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "supported_parameters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "lmarena_elo": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "LMArena ELO entry or null when not tracked"
+              }
+            }
+          },
+          "b": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "input_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Input price per 1M tokens (USD)"
+              },
+              "output_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "Output price per 1M tokens (USD)"
+              },
+              "image_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "cache_read_per_m": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "context_length": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "modality": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tokenizer": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "max_output_tokens": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "supported_parameters": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "lmarena_elo": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "LMArena ELO entry or null when not tracked"
+              }
+            }
+          }
+        },
+        "required": [
+          "a",
+          "b"
+        ]
+      },
+      "annotations": {
+        "title": "[Deprecated] Compare models",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "best_for_task",
+      "description": "[Deprecated] Alias of `models.top`. Use `models.top` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string",
+            "enum": [
+              "coding",
+              "reasoning",
+              "general",
+              "vision",
+              "cheap"
+            ],
+            "description": "Task type to optimise for"
+          },
+          "max_price_per_m_output": {
+            "type": "number",
+            "description": "Maximum price per 1M output tokens in USD (e.g. 1.0)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20,
+            "description": "Number of results (default 5)"
+          }
+        },
+        "required": [
+          "task"
+        ]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "task": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "input_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Input price per 1M tokens (USD)"
+                },
+                "output_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "Output price per 1M tokens (USD)"
+                },
+                "image_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "cache_read_per_m": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "context_length": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "modality": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tokenizer": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "max_output_tokens": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "supported_parameters": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "score": {
+                  "type": "number"
+                },
+                "lmarena_elo": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "LMArena ELO entry or null when not tracked"
+                }
+              }
+            }
+          }
+        },
+        "required": [
+          "task",
+          "results"
+        ]
+      },
+      "annotations": {
+        "title": "[Deprecated] Top models for task",
+        "readOnlyHint": true,
+        "idempotentHint": true,
+        "openWorldHint": true
+      }
+    },
+    {
+      "name": "refresh_cache",
+      "description": "[Deprecated] Alias of `cache.refresh`. Use `cache.refresh` instead.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "refreshed": {
+            "type": "boolean"
+          },
+          "models_count": {
+            "type": "integer"
+          },
+          "elo_entries": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "refreshed",
+          "models_count",
+          "elo_entries"
+        ]
+      },
+      "annotations": {
+        "title": "[Deprecated] Refresh cache",
         "readOnlyHint": false,
         "idempotentHint": true,
         "openWorldHint": true

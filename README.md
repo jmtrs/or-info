@@ -181,12 +181,17 @@ or-info refresh         # Force-refresh OpenRouter catalog + LMArena ELO
 
 | Tool | Description |
 |------|-------------|
-| `get_model_info` | Pricing, context, architecture, features and LMArena ELO for a model |
-| `list_models` | List models with optional filter, sort and limit |
-| `get_benchmarks` | LMArena ELO score, global rank, vote count and confidence interval for a model |
-| `compare_models` | Side-by-side comparison of two models |
-| `best_for_task` | Ranked top models for coding/reasoning/general/vision/cheap |
-| `refresh_cache` | Force-refresh OpenRouter catalog + LMArena ELO |
+| `models.get` | Pricing, context, architecture, features and LMArena ELO for a model |
+| `models.list` | List models with optional filter, sort and limit |
+| `models.compare` | Side-by-side comparison of two models |
+| `models.top` | Ranked top models for coding/reasoning/general/vision/cheap |
+| `benchmarks.get` | LMArena ELO score, global rank, vote count and confidence interval for a model |
+| `cache.refresh` | Force-refresh OpenRouter catalog + LMArena ELO |
+
+Legacy flat names (`get_model_info`, `list_models`, `get_benchmarks`,
+`compare_models`, `best_for_task`, `refresh_cache`) are still advertised in
+`tools/list` as deprecated aliases (same schemas, prefixed `[Deprecated]`)
+and remain callable. The dot-notation names are the canonical ones.
 
 ### Register in Claude Code
 
