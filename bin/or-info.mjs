@@ -1,6 +1,9 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module';
 import { InvalidArgumentError, program } from 'commander';
 import chalk from 'chalk';
+
+const { version } = createRequire(import.meta.url)('../package.json');
 import { fetchModels, findModel, pricePerMillion, contextLength } from '../lib/openrouter.mjs';
 import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
 import { rankModels } from '../lib/scorer.mjs';
@@ -40,7 +43,7 @@ async function apiKey() {
 program
   .name('or-info')
   .description('OpenRouter model info: prices, benchmarks, context and comparisons')
-  .version('0.1.5')
+  .version(version)
   .option('--mcp', 'Start MCP server (stdio transport)');
 
 // ── models ─────────────────────────────────────────────────────────────────

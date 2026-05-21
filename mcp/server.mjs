@@ -1,10 +1,14 @@
+import { createRequire } from 'node:module';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { fetchModels, findModel, pricePerMillion, contextLength, modelTags } from '../lib/openrouter.mjs';
 import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
 import { rankModels } from '../lib/scorer.mjs';
 import { getApiKey } from '../lib/secrets.mjs';
+
+const { version } = createRequire(import.meta.url)('../package.json');
 
 const MODEL_SUMMARY_SCHEMA = {
   type: 'object',
@@ -322,14 +326,15 @@ async function handleTool(name, args) {
   return errorContent(`Unknown tool: ${name}`);
 }
 
-export async function startMcp() {
-  const server = new Server(
-    { name: 'or-info', version: '0.1.5' },
+function makeServer() {
+  return new Server(
+    { name: 'or-info', version },
     { capabilities: { tools: {} } }
   );
+}
 
+function wireHandlers(server) {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
-
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
     try {
@@ -339,6 +344,11 @@ export async function startMcp() {
       return errorContent(safe);
     }
   });
+}
+
+export async function startMcp() {
+  const server = makeServer();
+  wireHandlers(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
@@ -351,4 +361,39 @@ export async function startMcp() {
       process.stdin.once('end', resolve);
     });
   }
+}
+
+export async function startHttpMcp() {
+  const { createServer } = await import('node:http');
+  const port = Number(process.env.PORT) || 8000;
+
+  // Bridge config values Smithery may inject from smithery.yaml configSchema.
+  // Smithery passes schema properties as-is or uppercased depending on version.
+  if (!process.env.OPENROUTER_API_KEY) {
+    process.env.OPENROUTER_API_KEY = process.env.api_key ?? process.env.API_KEY ?? '';
+  }
+
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+  const server = makeServer();
+  wireHandlers(server);
+  await server.connect(transport);
+
+  const serverCard = JSON.stringify({
+    serverInfo: { name: 'or-info', version },
+    tools: CANONICAL_TOOLS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
+  });
+
+  createServer(async (req, res) => {
+    if (req.url?.startsWith('/mcp')) {
+      await transport.handleRequest(req, res);
+    } else if (req.method === 'GET' && req.url === '/.well-known/mcp/server-card.json') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(serverCard);
+    } else {
+      res.writeHead(404);
+      res.end();
+    }
+  }).listen(port, () => {
+    process.stderr.write(`or-info HTTP MCP listening on port ${port}\n`);
+  });
 }
