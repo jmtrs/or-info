@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.14] – 2026-05
+
+### Added
+- `--pricing <mode>` flag for `top` command (`standard`, `cheap`, `premium`).
+  Decouples the price-penalty strategy from the task type, so combinations like
+  `top --task coding --pricing premium` (best coder regardless of price) now work.
+- `pricing` parameter in `models.top` MCP tool with the same three values.
+- Second deduplication pass in `rankModels`: when multiple OpenRouter models
+  match the same LMArena entry, only the highest-scoring one is kept.
+
+### Changed
+- `scoreForTask` and `rankModels` accept an explicit `pricing` argument that
+  overrides the default derived from the task name. Task names `cheap` and
+  `premium` still set their respective modes as before (backwards-compatible).
+
 ## [0.2.13] – 2026-05
 
 ### Added

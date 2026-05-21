@@ -134,4 +134,20 @@ describe('rankModels', () => {
     assert.ok(ids.length === 1, `expected 1, got ${ids.length}: ${ids.join(', ')}`);
     assert.equal(ids[0], 'test/testmodel-free:free', 'free variant should win (same ELO, better price)');
   });
+
+  it('deduplicates models sharing the same ELO entry', () => {
+    // Two different OR models both match the same LMArena name
+    const models = [
+      { id: 'test/shared-elo-model-nano', pricing: { prompt: '0.0000001', completion: '0.0000001' }, context_length: 8000,
+        architecture: { input_modalities: ['text'] }, supported_parameters: ['tools'] },
+      { id: 'test/shared-elo-model-pro', pricing: { prompt: '0.00001', completion: '0.00001' }, context_length: 128000,
+        architecture: { input_modalities: ['text'] }, supported_parameters: ['tools'] },
+    ];
+    const elo = [
+      { lmarenaName: 'shared-elo-model', elo: 1400, eloLower: 1390, eloUpper: 1410, votes: 5000, rank: 10 },
+    ];
+    const ranked = rankModels(models, elo, { task: 'general', limit: 10 });
+    // Only one should survive — the higher-scoring variant
+    assert.equal(ranked.length, 1, `expected 1, got ${ranked.length}`);
+  });
 });

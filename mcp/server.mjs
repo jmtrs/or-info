@@ -150,6 +150,11 @@ const CANONICAL_TOOLS = [
           enum: ['coding', 'reasoning', 'general', 'vision', 'cheap', 'premium'],
           description: 'Task type to optimise for',
         },
+        pricing: {
+          type: 'string',
+          enum: ['standard', 'cheap', 'premium'],
+          description: 'Price scoring override. Set to "premium" with task="coding" for best coding model regardless of price',
+        },
         max_price_per_m_output: {
           type: 'number',
           description: 'Maximum price per 1M output tokens in USD (e.g. 1.0)',
@@ -307,11 +312,12 @@ async function handleTool(name, args) {
 
   if (name === 'models.top') {
     const task = args.task ?? 'general';
+    const pricing = args.pricing ?? undefined;
     const limit = Math.min(20, Math.max(1, args.limit ?? 5));
     const maxPrice = args.max_price_per_m_output ?? undefined;
 
     const [models, allElo] = await Promise.all([fetchModels({ apiKey: key }), getAllElo()]);
-    const ranked = rankModels(models, allElo, { task, maxPricePerMOutput: maxPrice, limit });
+    const ranked = rankModels(models, allElo, { task, pricing, maxPricePerMOutput: maxPrice, limit });
     return result({ task, results: ranked.map((r) => ({ ...safeModelSummary(r.model), score: r.score, lmarena_elo: r.eloEntry })) });
   }
 

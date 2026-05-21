@@ -154,26 +154,38 @@ or-info compare openai/gpt-4o deepseek/deepseek-chat-v3-0324 --json
 ### Top models for a task
 
 ```bash
-or-info top --task coding             # Best coding models
-or-info top --task reasoning          # Best reasoning models
-or-info top --task general            # Best all-rounders
-or-info top --task vision             # Best vision models (requires image input)
-or-info top --task cheap              # Best value for money
-or-info top --task premium            # Highest quality, ignoring price
-or-info top --task coding --budget 2  # Best coders under $2/M output
+or-info top --task coding                          # Best coding models
+or-info top --task reasoning                       # Best reasoning models
+or-info top --task general                         # Best all-rounders
+or-info top --task vision                          # Best vision models (requires image input)
+or-info top --task cheap                           # Best value for money
+or-info top --task premium                         # Highest quality, ignoring price
+or-info top --task coding --pricing premium        # Best coder regardless of price
+or-info top --task coding --budget 2               # Best coders under $2/M output
 or-info top --task general --limit 10
 ```
 
-Ranking combines LMArena ELO with price and context window size. Task behaviour:
+Ranking combines LMArena ELO with price and context window size.
 
-| Task | Price weight | Capability filter |
-|------|-------------|-------------------|
-| `general` | standard penalty | none |
-| `coding` | standard penalty | soft penalty (−15%) if no tool support |
-| `reasoning` | standard penalty | none |
-| `vision` | standard penalty | hard filter: image input required |
-| `cheap` | steep penalty | none |
-| `premium` | ignored | none |
+`--task` controls which ELO category and capability filter to apply.
+`--pricing` overrides the price-penalty strategy independently:
+
+| `--pricing` | Effect |
+|-------------|--------|
+| `standard` (default) | Moderate penalty for expensive models |
+| `cheap` | Steep penalty; strongly favours free/low-cost models |
+| `premium` | No penalty; ranks by quality alone |
+
+Task defaults (when `--pricing` is not set):
+
+| Task | Default pricing | Capability filter |
+|------|----------------|-------------------|
+| `general` | standard | none |
+| `coding` | standard | soft penalty (−15%) if no tool support |
+| `reasoning` | standard | none |
+| `vision` | standard | hard filter: image input required |
+| `cheap` | cheap | none |
+| `premium` | premium | none |
 
 ### Cache management
 
@@ -193,7 +205,7 @@ or-info refresh         # Force-refresh OpenRouter catalog + LMArena ELO
 | `models.get` | Pricing, context, architecture, features and LMArena ELO for a model |
 | `models.list` | List models with optional filter, sort and limit |
 | `models.compare` | Side-by-side comparison of two models |
-| `models.top` | Ranked top models for coding/reasoning/general/vision/cheap/premium |
+| `models.top` | Ranked top models for coding/reasoning/general/vision/cheap/premium; accepts optional `pricing` override |
 | `benchmarks.get` | LMArena ELO score, global rank, vote count and confidence interval for a model |
 | `cache.refresh` | Force-refresh OpenRouter catalog + LMArena ELO |
 

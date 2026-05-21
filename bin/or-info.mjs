@@ -173,7 +173,8 @@ program
 program
   .command('top')
   .description('Best models for a task')
-  .option('--task <task>', 'Task: coding, reasoning, general, vision, cheap', 'general')
+  .option('--task <task>', 'Task: coding, reasoning, general, vision, cheap, premium', 'general')
+  .option('--pricing <mode>', 'Price scoring override: standard, cheap, premium', v => { const s = new Set(['standard', 'cheap', 'premium']); if (!s.has(v)) throw new InvalidArgumentError('must be standard, cheap, or premium'); return v; })
   .option('--budget <usd>', 'Max price per 1M output tokens (e.g. 1.00)', parseFloat)
   .option('--limit <n>', 'Number of results', parsePositiveInteger, 5)
   .option('--json', 'Output raw JSON')
@@ -190,6 +191,7 @@ program
 
     const ranked = rankModels(models, allElo, {
       task: opts.task,
+      pricing: opts.pricing,
       maxPricePerMOutput: opts.budget,
       limit: opts.limit,
     });
