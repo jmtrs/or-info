@@ -1,6 +1,23 @@
 # Changelog
 
-## [0.2.16] – 2026-05
+## [0.2.18] – 2026-05
+
+### Added
+- Security policy (`SECURITY.md`) with private vulnerability reporting.
+- Issue templates: bug report and feature request.
+- Pull request template with checklist.
+- `CODEOWNERS` file for default review ownership.
+- Custom labels: `mcp`, `cli`, `models`, `dependencies`, `semver:patch`, `semver:minor`, `semver:major`.
+- Repository topics: `openrouter`, `mcp`, `cli`, `llm`, `pricing`, `benchmarks`, `ai-models`.
+- GitHub Discussions enabled.
+- Branch protection on `main` (1 review, stale dismissal, conversation resolution).
+- Auto-merge and delete-branch-on-merge enabled.
+- Secret scanning with push protection enabled.
+
+### Changed
+- Release section in README replaced with link to `CHANGELOG.md`.
+- Full release process moved to `RELEASE.local.md` (gitignored).
+- Wiki and Projects disabled (unused).
 
 ### Fixed
 - `isFree()` now only returns `true` for models with the `:free` suffix or

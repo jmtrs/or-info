@@ -352,33 +352,7 @@ Additional entry points:
 
 ## Release
 
-Releases are published automatically to npm from GitHub Actions when a version tag is pushed.
-The package is public under the `@aggc` npm scope.
-
-Release checklist:
-
-1. Update `CHANGELOG.md`.
-2. Bump `version` in `package.json` **and** `manifest.json` (must match).
-3. Run `npm test`.
-4. Commit and push to `main`.
-5. Create and push a matching tag:
-
-```bash
-git tag v0.x.0
-git push origin v0.x.0
-```
-
-The publish workflow runs `npm ci`, `npm run test:local`, then
-`npm publish --provenance --access public`.
-
-Repository release requirements:
-
-- GitHub secret `NPM_TOKEN` must exist for `jmtrs/or-info`.
-- The token must have npm publish permission for `@aggc/or-info`.
-- `id-token: write` is enabled so npm provenance is attached to published versions.
-
-After the initial package bootstrap, prefer migrating to npm Trusted Publishing and then
-remove `NPM_TOKEN` from the repository secrets.
+See [CHANGELOG.md](CHANGELOG.md) for release history and details.
 
 ## Contributing
 
