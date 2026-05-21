@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.15] – 2026-05
+
+### Fixed
+- ELO/LMArena failures are now non-fatal in the MCP server: `getElo` and
+  `getAllElo` errors are caught and return `null`/`{}` instead of propagating
+  `isError: true` to the caller. Tools still return model data with
+  `lmarena_elo: null` when HuggingFace is unavailable (e.g. CI 429 throttling).
+- Online smoke tests: `best_for_task` assertions skip gracefully when ELO data
+  is unavailable rather than failing the test run.
+
 ## [0.2.14] – 2026-05
 
 ### Added

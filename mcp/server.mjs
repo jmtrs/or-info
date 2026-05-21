@@ -254,6 +254,22 @@ function errorContent(msg) {
   return { content: [{ type: 'text', text: `Error: ${msg}` }], isError: true };
 }
 
+async function safeGetElo(modelId, opts) {
+  try {
+    return await getElo(modelId, opts);
+  } catch {
+    return null;
+  }
+}
+
+async function safeGetAllElo(opts) {
+  try {
+    return await getAllElo(opts);
+  } catch {
+    return {};
+  }
+}
+
 async function handleTool(name, args) {
   // Accept legacy flat names (get_model_info, list_models, ...) by mapping
   // them to the dot-notation canonical names exposed in tools/list.
@@ -266,7 +282,7 @@ async function handleTool(name, args) {
     const models = await fetchModels({ apiKey: key });
     const model = findModel(models, model_id);
     if (!model) return errorContent(`Model not found: ${model_id}`);
-    const elo = await getElo(model_id);
+    const elo = await safeGetElo(model_id);
     return result({ ...safeModelSummary(model), lmarena_elo: elo ?? null });
   }
 
@@ -291,7 +307,7 @@ async function handleTool(name, args) {
   if (name === 'benchmarks.get') {
     const { model_id } = args;
     if (!model_id || typeof model_id !== 'string') return errorContent('model_id is required');
-    const elo = await getElo(model_id);
+    const elo = await safeGetElo(model_id);
     return result({ model_id, lmarena_elo: elo ?? null });
   }
 
@@ -300,8 +316,8 @@ async function handleTool(name, args) {
     if (!model_a || !model_b) return errorContent('model_a and model_b are required');
     const [models, eloA, eloB] = await Promise.all([
       fetchModels({ apiKey: key }),
-      getElo(model_a),
-      getElo(model_b),
+      safeGetElo(model_a),
+      safeGetElo(model_b),
     ]);
     const mA = findModel(models, model_a);
     const mB = findModel(models, model_b);
@@ -316,7 +332,7 @@ async function handleTool(name, args) {
     const limit = Math.min(20, Math.max(1, args.limit ?? 5));
     const maxPrice = args.max_price_per_m_output ?? undefined;
 
-    const [models, allElo] = await Promise.all([fetchModels({ apiKey: key }), getAllElo()]);
+    const [models, allElo] = await Promise.all([fetchModels({ apiKey: key }), safeGetAllElo()]);
     const ranked = rankModels(models, allElo, { task, pricing, maxPricePerMOutput: maxPrice, limit });
     return result({ task, results: ranked.map((r) => ({ ...safeModelSummary(r.model), score: r.score, lmarena_elo: r.eloEntry })) });
   }
