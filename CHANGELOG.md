@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.19] – 2026-05
+
+### Fixed
+- CLI edge tests: `price` command uses `id` field (not `model`).
+- CLI edge tests: benchmark/compare/top suites warm up LMArena cache before running.
+- CLI/MCP edge tests: all tests hitting LMArena now skip gracefully on 429 instead of failing.
+- MCP edge tests: `best_for_task` with empty ELO data skips instead of asserting.
+- `parseJson` test helper now tolerates informational text before JSON output (e.g. compare same-model warning).
+
 ## [0.2.18] – 2026-05
 
 ### Added

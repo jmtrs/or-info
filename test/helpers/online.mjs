@@ -7,6 +7,19 @@ export function parseJson(raw) {
   try {
     return JSON.parse(raw);
   } catch {
+    // Some CLI commands print informational text before the JSON.
+    // Find the first line that starts with { or [ and parse from there.
+    const lines = raw.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trimStart();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          return JSON.parse(lines.slice(i).join('\n'));
+        } catch {
+          break;
+        }
+      }
+    }
     throw new Error(`Invalid JSON:\n${raw.slice(0, 300)}`);
   }
 }

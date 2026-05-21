@@ -3,8 +3,11 @@
  */
 import { after, before, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { contextLength, pricePerMillion } from '../../lib/openrouter.mjs';
-import { ONLINE_TIMEOUT, parseJson, runCli } from '../helpers/online.mjs';
+import { BENCHMARKS_CACHE } from '../../lib/paths.mjs';
+import { ONLINE_TIMEOUT, parseJson, runCli, isTransientNetworkMessage } from '../helpers/online.mjs';
 import { createIsolatedAppEnv } from '../helpers/runtime.mjs';
 
 describe('CLI edge – models unusual queries', () => {
@@ -95,7 +98,7 @@ describe('CLI edge – price unusual models', () => {
   it('model with :free suffix has zero prices', { timeout: ONLINE_TIMEOUT }, async () => {
     const { stdout } = await runCli(['price', 'deepseek/deepseek-v4-flash:free', '--json'], { env: isolated.env });
     const out = parseJson(stdout);
-    assert.equal(out.model, 'deepseek/deepseek-v4-flash:free');
+    assert.equal(out.id, 'deepseek/deepseek-v4-flash:free');
     assert.equal(Number(out.pricing.completion), 0, 'output price should be 0');
     assert.equal(Number(out.pricing.prompt), 0, 'input price should be 0');
   });
@@ -103,7 +106,7 @@ describe('CLI edge – price unusual models', () => {
   it('alias model with ~ prefix resolves correctly', { timeout: ONLINE_TIMEOUT }, async () => {
     const { stdout } = await runCli(['price', '~anthropic/claude-sonnet-latest', '--json'], { env: isolated.env });
     const out = parseJson(stdout);
-    assert.equal(out.model, '~anthropic/claude-sonnet-latest');
+    assert.equal(out.id, '~anthropic/claude-sonnet-latest');
     assert.ok(Number(out.pricing.prompt) > 0, 'alias should have nonzero pricing');
   });
 
@@ -132,7 +135,7 @@ describe('CLI edge – price unusual models', () => {
   it('niche provider with hyphen (anthracite-org) resolves correctly', { timeout: ONLINE_TIMEOUT }, async () => {
     const { stdout } = await runCli(['price', 'anthracite-org/magnum-v4-72b', '--json'], { env: isolated.env });
     const out = parseJson(stdout);
-    assert.equal(out.model, 'anthracite-org/magnum-v4-72b');
+    assert.equal(out.id, 'anthracite-org/magnum-v4-72b');
     assert.ok(typeof out.pricing === 'object', 'pricing expected');
   });
 });
@@ -142,23 +145,34 @@ describe('CLI edge – benchmark', () => {
 
   before(async () => {
     isolated = await createIsolatedAppEnv('cli-edge-benchmark');
+    await warmUpBenchmarksCache(isolated.env);
   });
 
   after(async () => {
     await isolated.cleanup();
   });
 
-  it('niche solidity model returns null ELO (not in LMArena)', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['benchmark', 'alfredpros/codellama-7b-instruct-solidity', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(out.elo, null, 'obscure model should have no LMArena data');
+  it('niche solidity model returns null ELO (not in LMArena)', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['benchmark', 'alfredpros/codellama-7b-instruct-solidity', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(out.elo, null, 'obscure model should have no LMArena data');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 
-  it('ultra-cheap model (amazon/nova-micro-v1) benchmark returns valid JSON', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['benchmark', 'amazon/nova-micro-v1', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(out.model, 'amazon/nova-micro-v1');
-    assert.ok('elo' in out, 'elo field expected');
+  it('ultra-cheap model (amazon/nova-micro-v1) benchmark returns valid JSON', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['benchmark', 'amazon/nova-micro-v1', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(out.model, 'amazon/nova-micro-v1');
+      assert.ok('elo' in out, 'elo field expected');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 });
 
@@ -167,39 +181,55 @@ describe('CLI edge – compare', () => {
 
   before(async () => {
     isolated = await createIsolatedAppEnv('cli-edge-compare');
+    await warmUpBenchmarksCache(isolated.env);
   });
 
   after(async () => {
     await isolated.cleanup();
   });
 
-  it('comparing a model with itself returns identical a/b data', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['compare', 'openai/o1-pro', 'openai/o1-pro', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(out.a.model.id, out.b.model.id, 'a and b should be the same model');
-    assert.deepEqual(out.a.model.pricing, out.b.model.pricing, 'pricing should be identical');
+  it('comparing a model with itself returns identical a/b data', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['compare', 'openai/o1-pro', 'openai/o1-pro', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(out.a.model.id, out.b.model.id, 'a and b should be the same model');
+      assert.deepEqual(out.a.model.pricing, out.b.model.pricing, 'pricing should be identical');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 
-  it('comparing ultra-expensive vs ultra-cheap shows very different prices', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['compare', 'openai/o1-pro', 'amazon/nova-micro-v1', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    const priceA = pricePerMillion(out.a.model).output;
-    const priceB = pricePerMillion(out.b.model).output;
-    assert.ok(priceA > priceB * 100, `o1-pro ($${priceA}/M) should cost >> nova-micro ($${priceB}/M)`);
+  it('comparing ultra-expensive vs ultra-cheap shows very different prices', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['compare', 'openai/o1-pro', 'amazon/nova-micro-v1', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      const priceA = pricePerMillion(out.a.model).output;
+      const priceB = pricePerMillion(out.b.model).output;
+      assert.ok(priceA > priceB * 100, `o1-pro ($${priceA}/M) should cost >> nova-micro ($${priceB}/M)`);
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 
-  it('comparing two free models works without error', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli([
-      'compare',
-      'deepseek/deepseek-v4-flash:free',
-      'meta-llama/llama-3.3-70b-instruct:free',
-      '--json',
-    ], { env: isolated.env });
-    const out = parseJson(stdout);
-    const pA = pricePerMillion(out.a.model);
-    const pB = pricePerMillion(out.b.model);
-    assert.equal(pA.output, 0, 'a should be free');
-    assert.equal(pB.output, 0, 'b should be free');
+  it('comparing two free models works without error', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli([
+        'compare',
+        'deepseek/deepseek-v4-flash:free',
+        'meta-llama/llama-3.3-70b-instruct:free',
+        '--json',
+      ], { env: isolated.env });
+      const out = parseJson(stdout);
+      const pA = pricePerMillion(out.a.model);
+      const pB = pricePerMillion(out.b.model);
+      assert.equal(pA.output, 0, 'a should be free');
+      assert.equal(pB.output, 0, 'b should be free');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 });
 
@@ -208,46 +238,95 @@ describe('CLI edge – top', () => {
 
   before(async () => {
     isolated = await createIsolatedAppEnv('cli-edge-top');
+    await warmUpBenchmarksCache(isolated.env);
   });
 
   after(async () => {
     await isolated.cleanup();
   });
 
-  it('--task vision returns vision-capable models', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--task', 'vision', '--limit', '5', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.ok(Array.isArray(out) && out.length > 0, 'vision task should have results');
-    for (const r of out) {
-      assert.equal(typeof r.id, 'string');
-      assert.equal(typeof r.score, 'number');
+  it('--task vision returns vision-capable models', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--task', 'vision', '--limit', '5', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.ok(Array.isArray(out) && out.length > 0, 'vision task should have results');
+      for (const r of out) {
+        assert.equal(typeof r.id, 'string');
+        assert.equal(typeof r.score, 'number');
+      }
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
     }
   });
 
-  it('--task cheap with --limit 1 returns exactly 1 result', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--task', 'cheap', '--limit', '1', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.equal(out.length, 1, 'should return exactly 1 model');
-    assert.equal(typeof out[0].score, 'number');
-  });
-
-  it('--budget 0 restricts to free models only', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--budget', '0', '--limit', '10', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.ok(out.length > 0, 'some free models should have ELO data');
-  });
-
-  it('--task reasoning returns scored results', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--task', 'reasoning', '--limit', '3', '--json'], { env: isolated.env });
-    const out = parseJson(stdout);
-    assert.ok(out.length > 0, 'reasoning task should have results');
-    for (let i = 0; i < out.length - 1; i++) {
-      assert.ok(out[i].score >= out[i + 1].score, 'results should be sorted by score desc');
+  it('--task cheap with --limit 1 returns exactly 1 result', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--task', 'cheap', '--limit', '1', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.equal(out.length, 1, 'should return exactly 1 model');
+      assert.equal(typeof out[0].score, 'number');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
     }
   });
 
-  it('no results message when budget is impossibly negative (exit 0)', { timeout: ONLINE_TIMEOUT }, async () => {
-    const { stdout } = await runCli(['top', '--budget', '-0.01'], { env: isolated.env });
-    assert.ok(stdout.includes('No results'), 'should print no-results message');
+  it('--budget 0 restricts to free models only', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--budget', '0', '--limit', '10', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.ok(out.length > 0, 'some free models should have ELO data');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
+  });
+
+  it('--task reasoning returns scored results', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--task', 'reasoning', '--limit', '3', '--json'], { env: isolated.env });
+      const out = parseJson(stdout);
+      assert.ok(out.length > 0, 'reasoning task should have results');
+      for (let i = 0; i < out.length - 1; i++) {
+        assert.ok(out[i].score >= out[i + 1].score, 'results should be sorted by score desc');
+      }
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
+  });
+
+  it('no results message when budget is impossibly negative (exit 0)', { timeout: ONLINE_TIMEOUT }, async (t) => {
+    try {
+      const { stdout } = await runCli(['top', '--budget', '-0.01'], { env: isolated.env });
+      assert.ok(stdout.includes('No results'), 'should print no-results message');
+    } catch (err) {
+      if (isTransientNetworkMessage(err.message)) return t.skip(`Transient network error: ${err.message}`);
+      throw err;
+    }
   });
 });
+
+// Pre-populate the isolated env's benchmarks cache.
+// If a local cache exists, copy it. Otherwise, run `or-info refresh`
+// once so HuggingFace is hit only once, not per-test.
+async function warmUpBenchmarksCache(env) {
+  try {
+    const src = BENCHMARKS_CACHE;
+    const dstDir = env.OR_INFO_CACHE_DIR;
+    const dst = path.join(dstDir, path.basename(src));
+    const content = await fs.readFile(src, 'utf-8');
+    await fs.mkdir(dstDir, { recursive: true });
+    await fs.writeFile(dst, content, 'utf-8');
+    return;
+  } catch {
+    // No local cache — fall through to CLI refresh.
+  }
+
+  try {
+    await runCli(['refresh'], { env, timeoutMs: 30_000 });
+  } catch {
+    // Best-effort; individual tests handle transient errors via skip.
+  }
+}
