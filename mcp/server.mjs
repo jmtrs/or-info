@@ -320,7 +320,7 @@ async function handleTool(name, args) {
       fetchModels({ force: true, apiKey: key }),
       loadLeaderboard({ force: true }),
     ]);
-    return result({ refreshed: true, models_count: models.length, elo_entries: elo.length });
+    return result({ refreshed: true, models_count: models.length, elo_entries: (elo.overall ?? []).length });
   }
 
   return errorContent(`Unknown tool: ${name}`);

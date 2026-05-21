@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.11] – 2026-05
+
+### Fixed
+- `top --task coding` and `top --task reasoning` now use task-specific LMArena
+  ELO categories (`coding` and `math` respectively) instead of always ranking
+  by 'overall'. Results for these tasks will differ from `general`.
+- LMArena fetcher downloads only the three categories the app uses (`overall`,
+  `coding`, `math`) — roughly 12 pages instead of ~89 — reducing HuggingFace
+  429 errors significantly.
+- Cache schema migration: old `entries`-keyed cache is silently ignored on first
+  load and rebuilt under the new `byCategory` schema.
+- `compare <a> <b>` now prints a warning when both IDs resolve to the same model.
+- Test suite: `warmUpBenchmarksCache` helper copies the real local cache into
+  each isolated test env so most online tests skip the HuggingFace download;
+  `refresh` test is 429-tolerant.
+
+## [0.2.10] – 2026-05
+
+### Fixed
+- `top --task vision` was returning non-vision models when the capability filter
+  interacted with the scorer; filter is now applied before scoring.
+- MCP server race condition: parallel tool calls on a cold cache could each
+  trigger a separate network fetch; serialised behind a single in-flight promise.
+- `price --json` output field renamed `model` → `id` to match `models --json`.
+
 ## [0.2.9] – 2026-05
 
 ### Added

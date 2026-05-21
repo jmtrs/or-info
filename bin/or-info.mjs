@@ -158,6 +158,10 @@ program
     if (!mA) die(`Model not found: ${idA}`);
     if (!mB) die(`Model not found: ${idB}`);
 
+    if (mA.id === mB.id) {
+      console.log(chalk.yellow('Both model IDs resolve to the same model:') + ` ${mA.id}`);
+    }
+
     if (opts.json) {
       console.log(JSON.stringify({ a: { model: mA, elo: eloA }, b: { model: mB, elo: eloB } }, null, 2));
       return;
@@ -213,7 +217,8 @@ program
 
     process.stdout.write(chalk.dim('Refreshing LMArena ELO…'));
     const elo = await loadLeaderboard({ force: true });
-    console.log(chalk.green(` ✓  ${elo.length} entries`));
+    const eloCount = (elo.overall ?? []).length;
+    console.log(chalk.green(` ✓  ${eloCount} entries`));
   });
 
 // ── status ─────────────────────────────────────────────────────────────────
