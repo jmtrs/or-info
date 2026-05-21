@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.7] – 2026-05
+
+### Added
+- `outputSchema` and `annotations` (readOnlyHint, idempotentHint, openWorldHint,
+  title) for every MCP tool. Tool results now also return `structuredContent`
+  so clients that validate against the output schema get a typed payload, not
+  just the JSON text block.
+
 ## [0.2.6] – 2026-05
 
 ### Added

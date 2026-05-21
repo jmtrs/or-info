@@ -6,6 +6,26 @@ import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
 import { rankModels } from '../lib/scorer.mjs';
 import { getApiKey } from '../lib/secrets.mjs';
 
+const MODEL_SUMMARY_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    input_per_m: { type: ['number', 'null'], description: 'Input price per 1M tokens (USD)' },
+    output_per_m: { type: ['number', 'null'], description: 'Output price per 1M tokens (USD)' },
+    image_per_m: { type: ['number', 'null'] },
+    cache_read_per_m: { type: ['number', 'null'] },
+    context_length: { type: ['integer', 'null'] },
+    features: { type: 'array', items: { type: 'string' } },
+    modality: { type: ['string', 'null'] },
+    tokenizer: { type: ['string', 'null'] },
+    max_output_tokens: { type: ['integer', 'null'] },
+    supported_parameters: { type: 'array', items: { type: 'string' } },
+  },
+};
+
+const ELO_SCHEMA = { type: ['object', 'null'], description: 'LMArena ELO entry or null when not tracked' };
+
 const TOOLS = [
   {
     name: 'get_model_info',
@@ -16,6 +36,16 @@ const TOOLS = [
         model_id: { type: 'string', description: 'OpenRouter model ID, e.g. "anthropic/claude-sonnet-4-5"' },
       },
       required: ['model_id'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: { ...MODEL_SUMMARY_SCHEMA.properties, lmarena_elo: ELO_SCHEMA },
+    },
+    annotations: {
+      title: 'Get model info',
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
     },
   },
   {
@@ -30,6 +60,20 @@ const TOOLS = [
         free_only: { type: 'boolean', description: 'Return only free models' },
       },
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        total: { type: 'integer' },
+        models: { type: 'array', items: MODEL_SUMMARY_SCHEMA },
+      },
+      required: ['total', 'models'],
+    },
+    annotations: {
+      title: 'List models',
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
   },
   {
     name: 'get_benchmarks',
@@ -40,6 +84,20 @@ const TOOLS = [
         model_id: { type: 'string', description: 'OpenRouter model ID' },
       },
       required: ['model_id'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        model_id: { type: 'string' },
+        lmarena_elo: ELO_SCHEMA,
+      },
+      required: ['model_id'],
+    },
+    annotations: {
+      title: 'Get benchmarks',
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
     },
   },
   {
@@ -52,6 +110,20 @@ const TOOLS = [
         model_b: { type: 'string', description: 'Second OpenRouter model ID' },
       },
       required: ['model_a', 'model_b'],
+    },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        a: { type: 'object', properties: { ...MODEL_SUMMARY_SCHEMA.properties, lmarena_elo: ELO_SCHEMA } },
+        b: { type: 'object', properties: { ...MODEL_SUMMARY_SCHEMA.properties, lmarena_elo: ELO_SCHEMA } },
+      },
+      required: ['a', 'b'],
+    },
+    annotations: {
+      title: 'Compare models',
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
     },
   },
   {
@@ -73,11 +145,46 @@ const TOOLS = [
       },
       required: ['task'],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string' },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { ...MODEL_SUMMARY_SCHEMA.properties, score: { type: 'number' }, lmarena_elo: ELO_SCHEMA },
+          },
+        },
+      },
+      required: ['task', 'results'],
+    },
+    annotations: {
+      title: 'Best models for task',
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
   },
   {
     name: 'refresh_cache',
     description: 'Force-refresh the local cache: OpenRouter model catalog + LMArena ELO data',
     inputSchema: { type: 'object', properties: {} },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        refreshed: { type: 'boolean' },
+        models_count: { type: 'integer' },
+        elo_entries: { type: 'integer' },
+      },
+      required: ['refreshed', 'models_count', 'elo_entries'],
+    },
+    annotations: {
+      title: 'Refresh cache',
+      readOnlyHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
   },
 ];
 
@@ -99,8 +206,11 @@ function safeModelSummary(model) {
   };
 }
 
-function textContent(obj) {
-  return [{ type: 'text', text: JSON.stringify(obj, null, 2) }];
+function result(obj) {
+  return {
+    content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }],
+    structuredContent: obj,
+  };
 }
 
 function errorContent(msg) {
@@ -117,7 +227,7 @@ async function handleTool(name, args) {
     const model = findModel(models, model_id);
     if (!model) return errorContent(`Model not found: ${model_id}`);
     const elo = await getElo(model_id);
-    return { content: textContent({ ...safeModelSummary(model), lmarena_elo: elo ?? null }) };
+    return result({ ...safeModelSummary(model), lmarena_elo: elo ?? null });
   }
 
   if (name === 'list_models') {
@@ -135,14 +245,14 @@ async function handleTool(name, args) {
     else models.sort((a, b) => a.id.localeCompare(b.id));
 
     models = models.slice(0, limit);
-    return { content: textContent({ total: models.length, models: models.map(safeModelSummary) }) };
+    return result({ total: models.length, models: models.map(safeModelSummary) });
   }
 
   if (name === 'get_benchmarks') {
     const { model_id } = args;
     if (!model_id || typeof model_id !== 'string') return errorContent('model_id is required');
     const elo = await getElo(model_id);
-    return { content: textContent({ model_id, lmarena_elo: elo ?? null }) };
+    return result({ model_id, lmarena_elo: elo ?? null });
   }
 
   if (name === 'compare_models') {
@@ -157,7 +267,7 @@ async function handleTool(name, args) {
     const mB = findModel(models, model_b);
     if (!mA) return errorContent(`Model not found: ${model_a}`);
     if (!mB) return errorContent(`Model not found: ${model_b}`);
-    return { content: textContent({ a: { ...safeModelSummary(mA), lmarena_elo: eloA }, b: { ...safeModelSummary(mB), lmarena_elo: eloB } }) };
+    return result({ a: { ...safeModelSummary(mA), lmarena_elo: eloA }, b: { ...safeModelSummary(mB), lmarena_elo: eloB } });
   }
 
   if (name === 'best_for_task') {
@@ -167,7 +277,7 @@ async function handleTool(name, args) {
 
     const [models, allElo] = await Promise.all([fetchModels({ apiKey: key }), getAllElo()]);
     const ranked = rankModels(models, allElo, { task, maxPricePerMOutput: maxPrice, limit });
-    return { content: textContent({ task, results: ranked.map((r) => ({ ...safeModelSummary(r.model), score: r.score, lmarena_elo: r.eloEntry })) }) };
+    return result({ task, results: ranked.map((r) => ({ ...safeModelSummary(r.model), score: r.score, lmarena_elo: r.eloEntry })) });
   }
 
   if (name === 'refresh_cache') {
@@ -175,7 +285,7 @@ async function handleTool(name, args) {
       fetchModels({ force: true, apiKey: key }),
       loadLeaderboard({ force: true }),
     ]);
-    return { content: textContent({ refreshed: true, models_count: models.length, elo_entries: elo.length }) };
+    return result({ refreshed: true, models_count: models.length, elo_entries: elo.length });
   }
 
   return errorContent(`Unknown tool: ${name}`);
