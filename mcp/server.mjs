@@ -347,20 +347,45 @@ function wireHandlers(server) {
 }
 
 export async function startMcp() {
+  // Track in-flight tool calls so we don't exit while a response is still being written.
+  // Race condition: stdin EOF fires before the async handleTool completes, causing
+  // process.exit(0) to kill the process before the MCP SDK writes the response to stdout.
+  let pending = 0;
+  let stdinEnded = false;
+  let resolveWhenDone;
+  const donePromise = new Promise((res) => { resolveWhenDone = res; });
+
+  function checkDone() {
+    if (stdinEnded && pending === 0) resolveWhenDone();
+  }
+
   const server = makeServer();
-  wireHandlers(server);
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+  server.setRequestHandler(CallToolRequestSchema, async (req) => {
+    const { name, arguments: args } = req.params;
+    pending++;
+    try {
+      return await handleTool(name, args ?? {});
+    } catch (err) {
+      const safe = err.message?.replace(/sk-[a-zA-Z0-9-]+/g, '[REDACTED]') ?? 'Unexpected error';
+      return errorContent(safe);
+    } finally {
+      pending--;
+      // Defer checkDone by one tick so the SDK's response-write microtask runs first.
+      setImmediate(checkDone);
+    }
+  });
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  // server.connect() returns immediately after wiring up the transport.
-  // Block here until stdin closes so the process stays alive while serving.
   if (!process.stdin.destroyed) {
-    await new Promise((resolve) => {
-      process.stdin.once('close', resolve);
-      process.stdin.once('end', resolve);
-    });
+    process.stdin.once('close', () => { stdinEnded = true; checkDone(); });
+    process.stdin.once('end', () => { stdinEnded = true; checkDone(); });
+    await donePromise;
   }
+  // One extra tick for any buffered stdout writes before the caller calls process.exit().
+  await new Promise((resolve) => setImmediate(resolve));
 }
 
 export async function startHttpMcp() {

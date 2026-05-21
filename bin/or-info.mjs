@@ -108,7 +108,7 @@ program
 
     if (opts.json) {
       console.log(JSON.stringify({
-        model: model.id,
+        id: model.id,
         pricing: model.pricing,
         context_length: contextLength(model),
       }, null, 2));
