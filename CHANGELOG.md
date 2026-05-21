@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.13] – 2026-05
+
+### Added
+- New `premium` task type for `top --task premium` and `models.top`: ranks
+  purely by LMArena ELO, ignoring price. Useful when quality is the only
+  constraint.
+- Context window bonus in the scorer: models with ≥128k context get a small
+  multiplier vs. smaller-context models, reflecting their practical advantage
+  on long inputs.
+
+### Changed
+- ELO normalisation range widened from [1050–1500] to [1000–1600] to better
+  spread current frontier model scores.
+- `cheap` task now uses a steeper logarithmic penalty curve that more
+  aggressively favours free/near-free models over expensive ones.
+- `coding` task no longer hard-filters out models that lack tool-call support;
+  those models now receive a 0.85 soft penalty instead of being excluded.
+  This surfaces capable no-tools models while still ranking them lower.
+- `rankModels` deduplicates `:free` and paid variants of the same base model,
+  keeping only the highest-scoring variant per base ID.
+
 ## [0.2.12] – 2026-05
 
 ### Fixed

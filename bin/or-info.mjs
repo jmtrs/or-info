@@ -22,7 +22,7 @@ function die(msg) {
   process.exit(1);
 }
 
-const TOP_TASKS = new Set(['coding', 'reasoning', 'general', 'vision', 'cheap']);
+const TOP_TASKS = new Set(['coding', 'reasoning', 'general', 'vision', 'cheap', 'premium']);
 
 function parsePositiveInteger(value) {
   const n = Number.parseInt(value, 10);

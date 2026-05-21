@@ -147,7 +147,7 @@ const CANONICAL_TOOLS = [
       properties: {
         task: {
           type: 'string',
-          enum: ['coding', 'reasoning', 'general', 'vision', 'cheap'],
+          enum: ['coding', 'reasoning', 'general', 'vision', 'cheap', 'premium'],
           description: 'Task type to optimise for',
         },
         max_price_per_m_output: {

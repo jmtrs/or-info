@@ -10,6 +10,14 @@ const CODING_MODEL = {
   supported_parameters: ['tools', 'tool_choice'],
 };
 
+const NO_TOOLS_MODEL = {
+  id: 'test/no-tools',
+  pricing: { prompt: '0', completion: '0' },
+  context_length: 128000,
+  architecture: { input_modalities: ['text'] },
+  supported_parameters: [],
+};
+
 const ELO_ENTRY = {
   lmarenaName: 'test-coder',
   elo: 1280,
@@ -35,10 +43,44 @@ describe('scoreForTask', () => {
     assert.equal(scoreForTask(CODING_MODEL, ELO_ENTRY, 'vision'), null);
   });
 
-  it('cheap task applies more aggressive price penalty', () => {
+  it('cheap task applies steeper price penalty than general', () => {
     const resultGeneral = scoreForTask(CODING_MODEL, ELO_ENTRY, 'general');
     const resultCheap = scoreForTask(CODING_MODEL, ELO_ENTRY, 'cheap');
-    assert.notEqual(resultCheap?.score, resultGeneral?.score);
+    assert.ok(resultCheap.score < resultGeneral.score,
+      `cheap (${resultCheap.score}) should penalise $3/M more than general (${resultGeneral.score})`);
+  });
+
+  it('score never exceeds 100', () => {
+    const topElo = { ...ELO_ENTRY, elo: 1540 };
+    const result = scoreForTask(NO_TOOLS_MODEL, topElo, 'cheap');
+    assert.ok(result.score <= 100, `score ${result.score} exceeds 100`);
+  });
+
+  it('premium task ignores price', () => {
+    const expensiveModel = {
+      ...CODING_MODEL,
+      pricing: { prompt: '0.000075', completion: '0.000075' },
+    };
+    const premium = scoreForTask(expensiveModel, ELO_ENTRY, 'premium');
+    const general = scoreForTask(expensiveModel, ELO_ENTRY, 'general');
+    assert.ok(premium.score > general.score,
+      `premium (${premium.score}) should not penalise $75/M, general (${general.score}) does`);
+  });
+
+  it('coding without tools applies soft penalty, not exclusion', () => {
+    const result = scoreForTask(NO_TOOLS_MODEL, ELO_ENTRY, 'coding');
+    assert.ok(result !== null, 'model without tools should still score for coding');
+    const withTools = scoreForTask(CODING_MODEL, ELO_ENTRY, 'coding');
+    assert.ok(result.score < withTools.score,
+      `no-tools (${result.score}) should score lower than with-tools (${withTools.score})`);
+  });
+
+  it('context bonus rewards larger context windows', () => {
+    const smallCtx = { ...CODING_MODEL, context_length: 8000 };
+    const resultSmall = scoreForTask(smallCtx, ELO_ENTRY, 'general');
+    const resultLarge = scoreForTask(CODING_MODEL, ELO_ENTRY, 'general');
+    assert.ok(resultLarge.score > resultSmall.score,
+      `128k ctx (${resultLarge.score}) should score higher than 8k (${resultSmall.score})`);
   });
 });
 
@@ -75,5 +117,21 @@ describe('rankModels', () => {
   it('filters by maxPricePerMOutput', () => {
     const ranked = rankModels(models, allElo, { task: 'general', maxPricePerMOutput: 1 });
     assert.ok(ranked.every((r) => r.model.id !== 'test/coder'));
+  });
+
+  it('deduplicates :free and paid variants of the same model', () => {
+    const dupModels = [
+      { id: 'test/testmodel-free:free', pricing: { prompt: '0', completion: '0' }, context_length: 8000,
+        architecture: { input_modalities: ['text'] }, supported_parameters: [] },
+      { id: 'test/testmodel-free', pricing: { prompt: '0.000001', completion: '0.000001' }, context_length: 8000,
+        architecture: { input_modalities: ['text'] }, supported_parameters: [] },
+    ];
+    const dupElo = [
+      { lmarenaName: 'testmodel-free', elo: 1300, eloLower: 1290, eloUpper: 1310, votes: 5000, rank: 10 },
+    ];
+    const ranked = rankModels(dupModels, dupElo, { task: 'general', limit: 10 });
+    const ids = ranked.map((r) => r.model.id);
+    assert.ok(ids.length === 1, `expected 1, got ${ids.length}: ${ids.join(', ')}`);
+    assert.equal(ids[0], 'test/testmodel-free:free', 'free variant should win (same ELO, better price)');
   });
 });

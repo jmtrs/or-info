@@ -157,14 +157,23 @@ or-info compare openai/gpt-4o deepseek/deepseek-chat-v3-0324 --json
 or-info top --task coding             # Best coding models
 or-info top --task reasoning          # Best reasoning models
 or-info top --task general            # Best all-rounders
-or-info top --task vision             # Best vision models
+or-info top --task vision             # Best vision models (requires image input)
 or-info top --task cheap              # Best value for money
+or-info top --task premium            # Highest quality, ignoring price
 or-info top --task coding --budget 2  # Best coders under $2/M output
 or-info top --task general --limit 10
 ```
 
-Ranking combines LMArena ELO with price. `--task vision` and `--task coding` additionally
-filter for models that support the required capability (image input / tool use).
+Ranking combines LMArena ELO with price and context window size. Task behaviour:
+
+| Task | Price weight | Capability filter |
+|------|-------------|-------------------|
+| `general` | standard penalty | none |
+| `coding` | standard penalty | soft penalty (−15%) if no tool support |
+| `reasoning` | standard penalty | none |
+| `vision` | standard penalty | hard filter: image input required |
+| `cheap` | steep penalty | none |
+| `premium` | ignored | none |
 
 ### Cache management
 
@@ -184,7 +193,7 @@ or-info refresh         # Force-refresh OpenRouter catalog + LMArena ELO
 | `models.get` | Pricing, context, architecture, features and LMArena ELO for a model |
 | `models.list` | List models with optional filter, sort and limit |
 | `models.compare` | Side-by-side comparison of two models |
-| `models.top` | Ranked top models for coding/reasoning/general/vision/cheap |
+| `models.top` | Ranked top models for coding/reasoning/general/vision/cheap/premium |
 | `benchmarks.get` | LMArena ELO score, global rank, vote count and confidence interval for a model |
 | `cache.refresh` | Force-refresh OpenRouter catalog + LMArena ELO |
 
