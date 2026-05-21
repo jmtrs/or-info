@@ -3,7 +3,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { fetchModels, findModel, pricePerMillion, contextLength, modelTags } from '../lib/openrouter.mjs';
+import { fetchModels, findModel, pricePerMillion, contextLength, modelTags, isFree } from '../lib/openrouter.mjs';
 import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
 import { rankModels } from '../lib/scorer.mjs';
 import { getApiKey } from '../lib/secrets.mjs';
@@ -294,7 +294,7 @@ async function handleTool(name, args) {
 
     let models = await fetchModels({ apiKey: key });
     if (filter) models = models.filter((m) => m.id.toLowerCase().includes(filter) || (m.name ?? '').toLowerCase().includes(filter));
-    if (freeOnly) models = models.filter((m) => { const p = pricePerMillion(m); return p.input === 0 && p.output === 0; });
+    if (freeOnly) models = models.filter(isFree);
 
     if (sortBy === 'price') models.sort((a, b) => (pricePerMillion(a).output ?? Infinity) - (pricePerMillion(b).output ?? Infinity));
     else if (sortBy === 'context') models.sort((a, b) => (contextLength(b) ?? 0) - (contextLength(a) ?? 0));

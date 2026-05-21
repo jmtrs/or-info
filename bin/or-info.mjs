@@ -4,7 +4,7 @@ import { InvalidArgumentError, program } from 'commander';
 import chalk from 'chalk';
 
 const { version } = createRequire(import.meta.url)('../package.json');
-import { fetchModels, findModel, pricePerMillion, contextLength } from '../lib/openrouter.mjs';
+import { fetchModels, findModel, pricePerMillion, contextLength, isFree } from '../lib/openrouter.mjs';
 import { getElo, getAllElo, loadLeaderboard } from '../lib/lmarena.mjs';
 import { rankModels } from '../lib/scorer.mjs';
 import { clearAll, status } from '../lib/cache.mjs';

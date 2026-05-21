@@ -119,9 +119,19 @@ describe('findModel', () => {
 });
 
 describe('isFree', () => {
-  it('returns true for zero-price model', () => {
-    const m = { pricing: { prompt: '0', completion: '0' } };
+  it('returns true for :free suffix model', () => {
+    const m = { id: 'deepseek/deepseek-v4-flash:free', pricing: { prompt: '0', completion: '0' } };
     assert.equal(isFree(m), true);
+  });
+
+  it('returns true for openrouter/free', () => {
+    const m = { id: 'openrouter/free', pricing: { prompt: '0', completion: '0' } };
+    assert.equal(isFree(m), true);
+  });
+
+  it('returns false for zero-price model without :free suffix (API bug)', () => {
+    const m = { id: 'z-ai/glm-5.1', pricing: { prompt: '0', completion: '0' } };
+    assert.equal(isFree(m), false);
   });
 
   it('returns false for paid model', () => {

@@ -3,8 +3,15 @@
 ## [0.2.16] – 2026-05
 
 ### Fixed
+- `isFree()` now only returns `true` for models with the `:free` suffix or
+  `openrouter/free`. OpenRouter's API reports `pricing="0"` for some
+  non-free models (e.g. `z-ai/glm-5.1`) — these are no longer listed as
+  free in `--free` / `free_only` filters.
+- `price` detail view shows a `⚠ reported free — may incur charges` warning
+  for models with zero pricing that lack the `:free` suffix.
+- Models table shows a `⚠` marker next to IDs with suspicious zero pricing.
 - Online smoke tests now skip gracefully on transient network errors (429, 502,
-   timeout, etc.) instead of hard-failing. Affects `benchmark`, `compare`,
+  timeout, etc.) instead of hard-failing. Affects `benchmark`, `compare`,
   `top`, and `refresh` CLI tests and the MCP `refresh_cache` test.
 - `warmUpBenchmarksCache` now falls back to `or-info refresh` when no local
   cache exists (the CI case), so HuggingFace is hit once per suite instead of
