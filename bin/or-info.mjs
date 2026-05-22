@@ -106,15 +106,16 @@ program
     const model = findModel(models, modelId);
     if (!model) die(`Model not found: ${modelId}`);
 
+    const elo = await getElo(modelId);
     if (opts.json) {
       console.log(JSON.stringify({
         id: model.id,
         pricing: model.pricing,
         context_length: contextLength(model),
+        elo: elo ?? null,
       }, null, 2));
       return;
     }
-    const elo = await getElo(modelId);
     console.log(modelDetail(model, elo));
   });
 
@@ -145,13 +146,16 @@ program
 program
   .command('compare <model-a> <model-b>')
   .description('Side-by-side comparison of two models')
+  .option('--task <task>', 'ELO category: coding, reasoning, general', 'general')
   .option('--json', 'Output raw JSON')
   .action(async (idA, idB, opts) => {
+    const taskToCat = { coding: 'coding', reasoning: 'math', general: 'overall' };
+    const category = taskToCat[opts.task] ?? 'overall';
     const key = await apiKey();
     const [models, eloA, eloB] = await Promise.all([
       fetchModels({ apiKey: key }),
-      getElo(idA),
-      getElo(idB),
+      getElo(idA, { category }),
+      getElo(idB, { category }),
     ]);
     const mA = findModel(models, idA);
     const mB = findModel(models, idB);
@@ -163,10 +167,10 @@ program
     }
 
     if (opts.json) {
-      console.log(JSON.stringify({ a: { model: mA, elo: eloA }, b: { model: mB, elo: eloB } }, null, 2));
+      console.log(JSON.stringify({ a: { model: mA, elo: eloA }, b: { model: mB, elo: eloB }, category }, null, 2));
       return;
     }
-    console.log(comparison(mA, eloA, mB, eloB));
+    console.log(comparison(mA, eloA, mB, eloB, category));
   });
 
 // ── top ────────────────────────────────────────────────────────────────────

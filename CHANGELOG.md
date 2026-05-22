@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.3.0] – 2026-05
+
+### Added
+- `compare` now accepts `--task` (coding, reasoning, general) for task-specific ELO.
+- `price --json` now includes `elo` field.
+
 ## [0.2.19] – 2026-05
 
 ### Fixed

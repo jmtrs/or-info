@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "or-info",
   "display_name": "OpenRouter Info",
-  "version": "0.2.19",
+  "version": "0.3.0",
   "description": "CLI + MCP server for OpenRouter models: prices, benchmarks, context and comparisons",
   "long_description": "Query OpenRouter model catalog and LMArena ELO rankings. Compare models, list best-for-task, get pricing and context length. No API key required for public catalog; optional OPENROUTER_API_KEY for private/pay-gated models.",
   "author": {
