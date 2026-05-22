@@ -46,7 +46,7 @@ describe('cache module', () => {
     assert.equal(result, null);
   });
 
-  it('clear removes one cache file and clearAll removes JSON cache files only', async () => {
+  it('clear removes one cache file and clearAll removes JSON and temp cache files', async () => {
     await cache.set(paths.MODELS_CACHE, { a: 1 });
     await cache.set(paths.BENCHMARKS_CACHE, { b: 2 });
     await fs.mkdir(paths.CACHE_DIR, { recursive: true });

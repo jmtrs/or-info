@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.1] – 2026-05-22
+
+### Fixed
+- `rankModels` null-safe: guard `allElo` parameter with `?.` to prevent crash on missing ELO category.
+
+### Changed
+- `manifest.json` synced with `mcp/server.mjs`: `models.top` and `best_for_task` now include `pricing` field and `premium` task enum.
+- Eliminated duplicated name-matching logic: `scorer.mjs` now imports `match`/`buildIndex` from `lmarena.mjs` (17 lines removed).
+- `lmarena.mjs` leaderboard loading uses promise-based gate to prevent concurrent fetches in HTTP MCP mode.
+- `clearAll` now removes stale `.tmp` cache files in addition to `.json`.
+
 ## [0.3.0] – 2026-05
 
 ### Added
